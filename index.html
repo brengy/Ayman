@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ayman · دليل العطور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root, [data-theme="dark"] {
+    /* very dark: near-black violet night, deep purple accents */
+    --bg: #05020C; --bg2: #0B0519; --bg-glow: rgba(110,50,200,.16); --surface: rgba(22,10,42,.72); --field: rgba(30,14,56,.8);
+    --ink: #EFE8FF; --muted: #A596C2; --faint: #75679A; --line: rgba(160,120,230,.12); --line-2: rgba(120,60,210,.5);
+    --accent: linear-gradient(135deg, #7E45E8 0%, #5A23C4 50%, #3B1192 100%); --a2: #A97CF5; --on-accent: #FFFFFF;
+    --accent-soft: rgba(110,50,200,.18); --accent-shadow: rgba(90,35,196,.45); --mono: radial-gradient(circle at 30% 25%, #2B1352, #0B0519);
+    --bad: #FF8FA8; --wave: #5A23C4; --wave2: #8A55EA;
+    --accent-text: linear-gradient(135deg, #B794FF 0%, #8A55EA 100%);   /* gradient for headings: deep but readable */
+  }
+  [data-theme="light"] {
+    /* very light violet background, very dark violet foreground */
+    --bg: #F6F2FF; --bg2: #ECE4FD; --bg-glow: rgba(120,80,220,.14); --surface: rgba(255,255,255,.82); --field: #FBF9FF;
+    --ink: #10042A; --muted: #2E1F52; --faint: #54457A; --line: rgba(16,4,42,.12); --line-2: rgba(42,11,110,.38);
+    --accent: linear-gradient(135deg, #3B1192 0%, #24086A 55%, #150448 100%); --a2: #24086A; --on-accent: #FFFFFF;
+    --accent-soft: rgba(42,11,110,.08); --accent-shadow: rgba(36,8,106,.28); --mono: radial-gradient(circle at 30% 25%, #FFFFFF, #E4DAFB);
+    --bad: #8E1B33; --wave: #B89CF2; --wave2: #D6C6FA;
+    --accent-text: linear-gradient(135deg, #3B1192 0%, #150448 100%);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Readex Pro", "Tajawal", Tahoma, sans-serif; font-size: 16px; }
+  body { min-height: 100vh; background: radial-gradient(80% 45% at 80% -5%, var(--bg-glow), transparent 70%), linear-gradient(180deg, var(--bg2), var(--bg) 60%); background-attachment: fixed; }
+  /* glowing violet waves, like the deck */
+  .waves { position: fixed; inset: auto 0 0 0; height: 46vh; pointer-events: none; z-index: 0; opacity: .7; }
+  .waves path { fill: none; stroke-linecap: round; }
+  [data-theme="light"] .waves { opacity: .8; }
+  .app { position: relative; z-index: 1; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--a2); outline-offset: 2px; }
+  .app { max-width: 760px; margin: 0 auto; padding: 14px 16px 120px; }
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 4px 0 8px; }
+  .brand { font-family: "Readex Pro", sans-serif; font-size: 28px; font-weight: 700; letter-spacing: 4px; direction: ltr; text-transform: uppercase; }
+  .copper { background: var(--accent-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .iconbtn { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line-2); background: var(--surface); display: grid; place-items: center; }
+  /* hero with the photo */
+  .hero { display: flex; align-items: center; gap: 18px; margin: 10px 0 18px; }
+  .photo { width: 112px; height: 112px; flex: none; border-radius: 50%; padding: 4px; background: var(--accent); box-shadow: 0 16px 40px var(--accent-shadow); }
+  .photo > * { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--mono); border: 3px solid var(--bg); }
+  .photo span { font-family: "Readex Pro", sans-serif; font-size: 54px; font-weight: 700; color: var(--a2); }
+  .hero h1 { font-family: "Readex Pro", sans-serif; font-weight: 700; font-size: clamp(26px, 6vw, 34px); margin: 0; line-height: 1.25; }
+  .hero p { margin: 4px 0 0; color: var(--muted); }
+  /* segmented controls and chips */
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--field); border: 1px solid var(--line); border-radius: 16px; padding: 5px; }
+  .seg button { border: none; background: none; border-radius: 12px; padding: 11px; color: var(--muted); font-weight: 500; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+  .hint { text-align: center; color: var(--faint); font-size: 13.5px; margin: 6px 0 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line-2); border-radius: 22px; padding: 18px; margin-bottom: 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 0 0 1px rgba(255,255,255,.02) inset, 0 20px 50px rgba(10,4,25,.35); }
+  .panel[hidden] { display: none; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .head h2 { font-family: "Readex Pro", sans-serif; font-weight: 700; font-size: 21px; margin: 0; }
+  .head .src { color: var(--faint); font-size: 13.5px; }
+  .search { position: relative; }
+  .search svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+  .field { width: 100%; background: var(--field); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; outline: none; }
+  .search .field { padding-inline-start: 44px; }
+  .field:focus { border-color: var(--a2); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+  .chip { border: 1px solid var(--line); background: var(--field); border-radius: 999px; padding: 8px 16px; font-size: 14.5px; }
+  .chip.on { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: 700; }
+  .count { color: var(--faint); font-size: 13.5px; margin: 10px 0 6px; }
+  /* list */
+  .list { max-height: 52vh; overflow-y: auto; border-top: 1px solid var(--line); }
+  /* scrollbars in the theme colours (instead of the white Windows bar) */
+  * { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--a2); }
+  .row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 4px; border: none; border-bottom: 1px solid var(--line); background: none; text-align: start; }
+  .row.on { background: var(--accent-soft); border-radius: 14px; }
+  .th { width: 50px; height: 50px; flex: none; border-radius: 15px; overflow: hidden; display: grid; place-items: center; background: #fff; border: 1px solid var(--line); }
+  .th img { width: 100%; height: 100%; object-fit: contain; }
+  .th span { font-family: "Readex Pro", sans-serif; font-size: 22px; font-weight: 700; color: #24086A; }
+  .rinfo { flex: 1; min-width: 0; }
+  .rname { display: block; font-weight: 700; direction: ltr; text-align: right; unicode-bidi: plaintext; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rmeta { display: block; font-size: 13.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gb { font-size: 12px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--a2); flex: none; }
+  .more { display: block; margin: 12px auto; border: 1px solid var(--line-2); background: none; border-radius: 999px; padding: 9px 20px; color: var(--a2); }
+  .empty { text-align: center; color: var(--muted); padding: 30px 0; }
+  /* preview */
+  .pv { margin-top: 16px; border: 1px solid var(--line-2); border-radius: 22px; overflow: hidden; }
+  .pv[hidden] { display: none; }
+  .pv .visual { display: grid; place-items: center; padding: 22px; background: radial-gradient(70% 70% at 50% 40%, var(--accent-soft), transparent 70%); }
+  .frame { width: min(62vw, 240px); aspect-ratio: 1; border-radius: 32px; background: #fff; padding: 14px; box-shadow: 0 20px 44px rgba(0,0,0,.3), 0 0 0 6px var(--accent-soft); }
+  .frame img { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 20px; }
+  .mono { width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; background: var(--mono); border: 1px solid var(--line-2); font-family: "Readex Pro", sans-serif; font-size: 70px; font-weight: 700; color: var(--a2); }
+  .pv .body { padding: 4px 18px 18px; }
+  .pv h3 { font-family: "Readex Pro", sans-serif; font-size: 30px; margin: 0; direction: ltr; text-align: right; unicode-bidi: plaintext; }
+  .pv .brandline { color: var(--muted); margin: 2px 0 12px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 15px; }
+  .kv b { color: var(--muted); font-weight: 500; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tags span { font-size: 13px; padding: 3px 11px; border-radius: 999px; border: 1px solid var(--line-2); }
+  .btn { display: inline-block; text-decoration: none; border: none; border-radius: 999px; padding: 12px 22px; font-weight: 700; background: var(--accent); color: var(--on-accent); margin-top: 16px; box-shadow: 0 10px 24px var(--accent-shadow); }
+  /* chat */
+  .msgs { display: flex; flex-direction: column; gap: 10px; max-height: 48vh; overflow-y: auto; padding: 4px 2px 10px; }
+  .msg { max-width: 88%; padding: 12px 15px; border-radius: 18px; line-height: 1.75; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.me { align-self: flex-start; background: var(--bubble-me); border-end-start-radius: 6px; }
+  .msg.ai { align-self: flex-end; background: var(--bubble-ai); border: 1px solid var(--line); border-end-end-radius: 6px; }
+  .msg.err { color: var(--bad); }
+  .msg .pk { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .msg .pk button { border: 1px solid var(--line-2); background: var(--field); border-radius: 999px; padding: 5px 12px; font-size: 13.5px; direction: ltr; }
+  .typing { display: inline-flex; gap: 5px; } .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--a2); animation: dot 1.2s infinite; } .typing i:nth-child(2) { animation-delay: .2s } .typing i:nth-child(3) { animation-delay: .4s }
+  @keyframes dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0) } 40% { opacity: 1; transform: translateY(-3px) } }
+  .starters { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+  .starters button { border: 1px dashed var(--line-2); background: none; border-radius: 999px; padding: 8px 14px; font-size: 14px; color: var(--muted); }
+  .q { font-weight: 600; margin: 14px 0 0; }
+  .ai-res { border: 1px solid var(--line-2); border-radius: 16px; padding: 10px 14px; margin: 12px 0 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: radial-gradient(80% 120% at 100% 0%, var(--accent-soft), transparent 60%), var(--field); }
+  .ai-res[hidden] { display: none; }
+  .ai-res button { border: 1px solid var(--line-2); background: none; border-radius: 999px; padding: 6px 14px; color: var(--ink); }
+  .why { display: block; font-size: 13px; color: var(--a2); white-space: normal; margin-top: 2px; }
+  .msgline { color: var(--bad); text-align: center; min-height: 1.3em; margin: 8px 0 0; font-size: 14px; }
+  .chip small { opacity: .6; }
+  .composer { display: flex; gap: 8px; margin-top: 10px; }
+  #sec-chat { margin-bottom: 96px; }      /* room so the floating bar never covers the question box */
+  .composer .field { flex: 1; }
+  .send { width: 52px; flex: none; border: none; border-radius: 16px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+  .send[disabled] { opacity: .5; }
+  /* floating switch */
+  .fabbar { position: sticky; bottom: 14px; z-index: 5; display: flex; justify-content: center; gap: 16px; width: max-content; margin: 18px auto 0; padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
+    border-radius: 999px; background: color-mix(in srgb, var(--bg) 82%, transparent); border: 1px solid var(--line-2); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 14px 36px rgba(0,0,0,.3); }
+  .fab { display: flex; flex-direction: column; align-items: center; gap: 4px; border: none; background: none; color: var(--muted); font-size: 13px; min-width: 86px; white-space: nowrap; }
+  .fab .c { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--field); border: 1px solid var(--line-2); }
+  .fab[aria-selected="true"] { color: var(--ink); font-weight: 700; }
+  .fab[aria-selected="true"] .c { background: var(--accent); color: var(--on-accent); border-color: transparent; transform: translateY(-3px); box-shadow: 0 8px 20px var(--accent-shadow); }
+  @media (prefers-reduced-motion: reduce) { .typing i { animation: none; } }
+</style>
+<style>
+  .iconrow { display: flex; gap: 8px; }
+  .pick { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .pick label { flex: 1; font-weight: 600; }
+  .pick input[type=color] { width: 54px; height: 42px; border: 1px solid var(--line-2); border-radius: 12px; background: none; padding: 3px; cursor: pointer; }
+  .pick code { direction: ltr; font-size: 13px; color: var(--muted); min-width: 64px; }
+  .sw.def { border-color: var(--line-2); }
+  .swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .sw { border: 1px solid var(--line); border-radius: 14px; padding: 10px 8px; display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+  .sw i { width: 26px; height: 26px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1px rgba(0,0,0,.15) inset; }
+  dialog { border: 1px solid var(--line-2); border-radius: 24px; background: var(--bg); color: var(--ink); padding: 0; width: min(560px, 94vw); max-height: 88vh; }
+  dialog::backdrop { background: rgba(0,0,0,.55); }
+  .dlg { padding: 18px 20px 22px; overflow-y: auto; max-height: 88vh; }
+  .dlg .x { float: left; }
+  .notes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .notes span { font-size: 14px; padding: 5px 12px; border-radius: 999px; background: var(--field); border: 1px solid var(--line); }
+  .sect { margin-top: 16px; }
+  .sect h4 { font-family: "Readex Pro", sans-serif; font-weight: 700; margin: 0 0 8px; font-size: 17px; color: var(--a2); }
+  .desc { line-height: 1.85; margin: 0; }
+  .en { direction: ltr; text-align: left; color: var(--muted); line-height: 1.7; margin: 0; }
+  .keybox { display: grid; gap: 10px; margin-top: 10px; }
+  .small { font-size: 13px; color: var(--faint); line-height: 1.6; }
+  .small a { color: var(--a2); }
+  .btn2 { border: 1px solid var(--line-2); background: none; border-radius: 999px; padding: 10px 18px; color: var(--a2); }
+</style>
+<script src="perfumes.js"></script>
+</head>
+<body>
+<svg class="waves" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true">
+  <defs><filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>
+  <g filter="url(#glow)" opacity=".45"><path d="M-50 300 C 250 140, 450 420, 700 250 S 1050 120, 1260 260" stroke="var(--wave)" stroke-width="10"/><path d="M-50 340 C 300 200, 520 430, 760 300 S 1080 180, 1260 320" stroke="var(--wave2)" stroke-width="6"/></g>
+  <path d="M-50 300 C 250 140, 450 420, 700 250 S 1050 120, 1260 260" stroke="var(--wave2)" stroke-width="2"/>
+  <path d="M-50 340 C 300 200, 520 430, 760 300 S 1080 180, 1260 320" stroke="var(--wave)" stroke-width="1.5"/>
+  <path d="M-50 370 C 320 260, 560 420, 820 330 S 1100 240, 1260 360" stroke="var(--wave)" stroke-width="1" opacity=".6"/>
+</svg>
+<div class="app">
+  <header class="top">
+    <span class="brand copper">Ayman</span>
+    <div class="iconrow">
+      <button class="iconbtn" id="paint" aria-label="اختار الألوان">🎨</button>
+      <button class="iconbtn" id="theme" aria-label="تغيير الثيم"></button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="photo" id="photo"><img src="ayman.jpg" alt="Ayman" onerror="this.parentNode.innerHTML='<span>A</span>'"></div>
+    <div>
+      <h1>دليل <span class="copper">العطور</span></h1>
+      <p id="sub">بنحمّل البرفانات…</p>
+    </div>
+  </section>
+
+  <div class="seg" role="tablist" aria-label="محلي أو الكل">
+    <button data-scope="local" aria-pressed="true">محلي</button>
+    <button data-scope="all" aria-pressed="false">الكل</button>
+  </div>
+  <p class="hint" id="scopeHint"></p>
+
+  <section class="panel" data-sec="list" id="sec-list">
+    <div class="head"><h2>كل البرفانات</h2><span class="src" id="src"></span></div>
+    <div class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input class="field" id="q" type="search" placeholder="دوّر بالاسم أو الماركة أو الريحة أو المكون" aria-label="بحث" autocomplete="off">
+    </div>
+    <div class="chips" id="filters">
+      <button class="chip on" data-f="">الكل</button><button class="chip" data-f="حريمي">حريمي</button><button class="chip" data-f="رجالي">رجالي</button><button class="chip" data-f="للجنسين">للجنسين</button>
+    </div>
+    <div class="ai-res" id="aires" hidden><span id="airesTxt"></span><button id="clearAi">عرض الكل</button></div>
+    <p class="count" id="count"></p>
+    <div class="list" id="list" role="listbox" aria-label="البرفانات"></div>
+    <article class="pv" id="pv" hidden aria-live="polite"></article>
+  </section>
+
+  <section class="panel" data-sec="reco" id="sec-reco" hidden>
+    <div class="head"><h2>رشّحلي</h2><span class="src">فوري، من الجدول كله</span></div>
+    <div class="q">للمين؟</div><div class="chips" data-k="gender"></div>
+    <div class="q">المناسبة</div><div class="chips" data-k="occasion"></div>
+    <div class="q">الريحة</div><div class="chips" data-k="style"></div>
+    <div class="q">الموسم</div><div class="chips" data-k="season"></div>
+    <div class="q">نوع الريحة (تقدر تختار أكتر من واحد)</div><div class="chips" id="types"></div>
+    <div class="q">عدد الاقتراحات</div><div class="chips" id="howMany"></div>
+    <div class="q">طلب بكلامك (اختياري)</div>
+    <input class="field" id="free" maxlength="200" placeholder="مثلًا: حاجة خفيفة صيفي للجامعة فيها ليمون" aria-label="طلب بكلامك">
+    <button class="btn" id="go" style="width:100%;margin-top:16px">اقترح فورًا</button>
+    <button class="more" id="resetReco" style="margin-top:10px">امسح الاختيارات</button>
+    <p class="msgline" id="recoMsg" aria-live="polite"></p>
+  </section>
+
+  <nav class="fabbar" role="tablist" aria-label="الأقسام">
+    <button class="fab" role="tab" data-go="list" aria-selected="true"><span class="c"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>كل البرفانات</button>
+    <button class="fab" role="tab" data-go="reco" aria-selected="false"><span class="c"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19 9.5l-5.2 1.9L12 17l-1.8-5.6L5 9.5l5.2-1.9L12 2z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" opacity=".7"/></svg></span>رشّحلي</button>
+  </nav>
+</div>
+
+<!-- choose your own colours -->
+<dialog id="colors"><div class="dlg">
+  <button class="iconbtn x" id="colorsClose" aria-label="قفل">✕</button>
+  <h3 style="font-family:'Readex Pro',sans-serif;margin:0 0 6px">الألوان</h3>
+  <p class="small">اختار لونين، والصفحة بتظبط باقي الدرجات لوحدها.</p>
+  <div class="pick"><label for="cBg">لون الخلفية</label><input type="color" id="cBg"><code id="cBgHex"></code></div>
+  <div class="pick"><label for="cFg">اللون الأمامي (الكلام والأزرار)</label><input type="color" id="cFg"><code id="cFgHex"></code></div>
+  <div class="q">ألوان جاهزة</div>
+  <div class="swatches" id="swatches"></div>
+  <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" id="colorsDone" style="margin:0">تم</button><button class="btn2" id="colorsReset">رجّع الافتراضي</button></div>
+</div></dialog>
+
+<!-- full information about one perfume -->
+<dialog id="info"><div class="dlg" id="infoBody"></div></dialog>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ar = x => Number(x).toLocaleString('ar-EG');
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\u064B-\u0652\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
+
+  // ---------- data (perfumes.js)
+  const DB = window.AYMAN_DB;
+  let GUIDE = [];
+  if (DB) {
+    const F = DB.fields, I = {}; F.forEach((f, i) => { I[f] = i; });
+    GUIDE = DB.rows.map((r, i) => {
+      const notes = r[I.notes] ? r[I.notes].split(/\s*،\s*/).filter(Boolean) : [];
+      const img = r[I.image] || '';
+      return { gid: 'A-' + (i + 1), name: r[I.name], brand: r[I.brand], gender: r[I.gender], local: !!r[I.local],
+        family: r[I.family], sub: r[I.sub], type: [r[I.family], r[I.sub]].filter(Boolean).join(' · '), notes,
+        special: notes.length ? 'نوتات: ' + notes.slice(0, 3).join('، ') : '', origin: r[I.origin], year: r[I.year],
+        tags: DB.tags.filter((t, k) => r[I.tags] & (1 << k)), image: img[0] === '~' ? DB.imgPre + img.slice(1) : img,
+        descAr: r[I.descAr], descEn: r[I.descEn], wheel: r[I.wheel] };
+    });
+    GUIDE.forEach(g => { g._s = norm(g.name + ' ' + g.brand + ' ' + g.type + ' ' + g.notes.join(' ')); });
+  }
+  let SCOPE = 'local', query = '', gender = '', cur = null, SHOWN = 150, MORE = false;
+  const PAGE = 150;
+  let RES = null, RESLIST = [];   // automatic suggestions: { gid: reason } and their order
+  const byGid = g => GUIDE.find(x => x.gid === g);
+  const inScope = g => SCOPE !== 'local' || g.local;
+
+  // ---------- theme
+  const SUN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const MOON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>';
+  const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} } };
+  function setTheme(t) { document.documentElement.setAttribute('data-theme', t); $('theme').innerHTML = t === 'dark' ? SUN : MOON; store.set('ayman-theme2', t); }
+  setTheme(store.get('ayman-theme2') || 'dark');
+  $('theme').onclick = () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+
+  // ---------- your own colours: everything is derived from two colours (background + foreground)
+  const hexRgb = h => { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); };
+  const rgbHex = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const mix = (a, b, t) => rgbHex(hexRgb(a).map((v, i) => v + (hexRgb(b)[i] - v) * t));          // t=0 → a, t=1 → b
+  const rgba = (h, a) => `rgba(${hexRgb(h).join(',')},${a})`;
+  const lum = h => { const c = hexRgb(h).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+  function applyColors(bg, fg) {
+    const r = document.documentElement.style, darkBg = lum(bg) < .35, toward = darkBg ? '#000000' : '#ffffff';
+    const set = (k, v) => r.setProperty(k, v);
+    set('--bg', bg); set('--bg2', mix(bg, darkBg ? '#ffffff' : '#000000', .06)); set('--bg-glow', rgba(fg, .14));
+    set('--surface', darkBg ? rgba(mix(bg, '#ffffff', .07), .82) : rgba(mix(bg, '#ffffff', .75), .85));
+    set('--field', mix(bg, darkBg ? '#ffffff' : '#ffffff', darkBg ? .09 : .6));
+    set('--ink', fg); set('--muted', mix(fg, bg, .3)); set('--faint', mix(fg, bg, .5));
+    set('--line', rgba(fg, .12)); set('--line-2', rgba(fg, .4));
+    const light = mix(fg, '#ffffff', .25), deep = mix(fg, '#000000', .35);
+    set('--accent', `linear-gradient(135deg, ${light} 0%, ${fg} 55%, ${deep} 100%)`); set('--accent-text', `linear-gradient(135deg, ${light} 0%, ${deep} 100%)`);
+    set('--a2', fg); set('--on-accent', lum(fg) > .45 ? '#120A1E' : '#FFFFFF');
+    set('--accent-soft', rgba(fg, .08)); set('--accent-shadow', rgba(fg, .28));
+    set('--mono', darkBg ? `radial-gradient(circle at 30% 25%, ${mix(bg, fg, .22)}, ${mix(bg, '#000000', .2)})` : `radial-gradient(circle at 30% 25%, ${mix(bg, '#ffffff', .6)}, ${mix(bg, toward, .08)})`);
+    set('--wave', mix(fg, bg, .55)); set('--wave2', mix(fg, bg, .75));
+    $('cBg').value = bg; $('cFg').value = fg; $('cBgHex').textContent = bg.toUpperCase(); $('cFgHex').textContent = fg.toUpperCase();
+  }
+  function clearColors() { ['--bg','--bg2','--bg-glow','--surface','--field','--ink','--muted','--faint','--line','--line-2','--accent','--accent-text','--a2','--on-accent','--accent-soft','--accent-shadow','--mono','--wave','--wave2'].forEach(k => document.documentElement.style.removeProperty(k)); }
+  const PRESETS = [['بنفسجي', '#F6F2FF', '#24086A'], ['بنفسجي غامق (الأساسي)', '#0B0519', '#B794FF'], ['زمردي', '#EEF7F2', '#0E4B36'], ['وردي', '#FFF1F4', '#7A1235'], ['كحلي', '#EEF3FA', '#0B2559'], ['دهبي', '#0C0A07', '#E2B565']];
+  $('swatches').innerHTML = PRESETS.map((p, i) => `<button class="sw ${i === 1 ? 'def' : ''}" data-p="${i}"><i style="background:linear-gradient(135deg, ${p[1]} 50%, ${p[2]} 50%)"></i>${p[0]}</button>`).join('');
+  const DEFAULT_COLORS = ['#0B0519', '#B794FF'];   // «بنفسجي غامق»: what the page opens with
+  function saveColors(bg, fg) { store.set('ayman-colors', JSON.stringify([bg, fg])); applyColors(bg, fg); }
+  $('paint').onclick = () => { const cs = getComputedStyle(document.documentElement);
+    if (store.get('ayman-colors') === 'builtin') { const d = document.documentElement.getAttribute('data-theme') === 'dark'; $('cBg').value = d ? '#05020C' : '#F6F2FF'; $('cFg').value = d ? '#B794FF' : '#24086A'; $('cBgHex').textContent = ''; $('cFgHex').textContent = ''; }
+    $('colors').showModal(); };
+  $('cBg').addEventListener('input', () => saveColors($('cBg').value, $('cFg').value));
+  $('cFg').addEventListener('input', () => saveColors($('cBg').value, $('cFg').value));
+  $('swatches').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; const p = PRESETS[+b.dataset.p]; saveColors(p[1], p[2]); });
+  $('colorsDone').onclick = () => $('colors').close();
+  $('colorsClose').onclick = () => $('colors').close();
+  $('colorsReset').onclick = () => { store.set('ayman-colors', null); applyColors(DEFAULT_COLORS[0], DEFAULT_COLORS[1]); };
+  $('colors').addEventListener('click', e => { if (e.target === $('colors')) $('colors').close(); });
+  { const c = store.get('ayman-colors');
+    if (c === 'builtin') {}                                     // the user chose the ☾/☀ themes
+    else { let bg = DEFAULT_COLORS[0], fg = DEFAULT_COLORS[1]; if (c) { try { [bg, fg] = JSON.parse(c); } catch (e) {} } applyColors(bg, fg); } }
+  // the sun/moon button switches back to the built-in light/dark themes
+  const _theme = $('theme').onclick;
+  $('theme').onclick = () => { store.set('ayman-colors', 'builtin'); clearColors(); _theme(); };
+
+  // ---------- sections
+  function show(sec) {
+    document.querySelectorAll('[data-sec]').forEach(el => { el.hidden = el.dataset.sec !== sec; });
+    document.querySelectorAll('.fab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.go === sec)));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.fab').forEach(b => b.onclick = () => show(b.dataset.go));
+
+  // ---------- scope
+  function setScope(s) {
+    SCOPE = s; store.set('ayman-scope', s);
+    document.querySelectorAll('[data-scope]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scope === s)));
+    const n = GUIDE.filter(g => g.local).length;
+    $('scopeHint').textContent = s === 'local' ? `المحلي بس (المشهور والمنتشر في مصر): ${ar(n)} برفان` : `الجدول كله: ${ar(GUIDE.length)} برفان`;
+    $('src').textContent = ar(s === 'local' ? n : GUIDE.length) + ' برفان';
+    RES = null; RESLIST = []; $('aires').hidden = true; renderTypes(); SHOWN = PAGE; renderList();
+  }
+  document.querySelector('.seg').addEventListener('click', e => { const b = e.target.closest('[data-scope]'); if (b) setScope(b.dataset.scope); });
+
+  // ---------- list
+  function renderList() {
+    const q = norm(query);
+    let items = (RES ? RESLIST.map(byGid) : GUIDE).filter(g => inScope(g) && (!gender || g.gender === gender) && (!q || g._s.includes(q)));
+    const total = items.length;
+    $('count').textContent = total ? ar(total) + ' برفان' + (total > SHOWN ? ` · معروض ${ar(SHOWN)}` : '') : '';
+    MORE = total > SHOWN; items = items.slice(0, SHOWN);
+    $('list').innerHTML = items.length ? items.map(g => `<button class="row ${g.gid === cur ? 'on' : ''}" role="option" aria-selected="${g.gid === cur}" data-gid="${g.gid}">
+        <span class="th">${g.image ? `<img src="${esc(g.image)}" alt="" loading="lazy">` : `<span>${esc(g.name.charAt(0))}</span>`}</span>
+        <span class="rinfo"><span class="rname">${esc(g.name)}</span><span class="rmeta">${esc(g.brand)}${g.type ? ' · ' + esc(g.type) : ''}</span>${RES && RES[g.gid] ? `<span class="why">⚡ ${esc(RES[g.gid])}</span>` : ''}</span>
+        ${g.gender ? `<span class="gb">${esc(g.gender)}</span>` : ''}</button>`).join('') + (MORE ? '<button class="more" id="more">اعرض ١٥٠ كمان</button>' : '')
+      : `<div class="empty">${GUIDE.length ? 'مفيش نتايج' : 'ملف perfumes.js مش موجود جنب الصفحة'}</div>`;
+    renderPreview();
+  }
+  function renderPreview() {
+    const g = cur && byGid(cur), pv = $('pv');
+    if (!g) { pv.hidden = true; return; }
+    pv.hidden = false;
+    pv.innerHTML = `<div class="visual">${g.image ? `<div class="frame"><img src="${esc(g.image)}" alt="${esc(g.name)}"></div>` : `<div class="mono">${esc(g.name.charAt(0))}</div>`}</div>
+      <div class="body"><h3>${esc(g.name)}</h3><div class="brandline">${esc(g.brand)}${g.gender ? ' · ' + esc(g.gender) : ''}${g.year ? ' · ' + esc(g.year) : ''}</div>
+      <div class="kv">${g.type ? `<b>نوع الريحة</b><span>${esc(g.type)}</span>` : ''}${g.special ? `<b>مميز في إيه</b><span>${esc(g.special)}</span>` : ''}</div>
+      ${g.tags.length ? `<div class="tags">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
+      <button class="btn" data-info="${g.gid}">ⓘ كل المعلومات</button></div>`;
+  }
+  function openInfo(g) {
+    const row = (k, v) => v ? `<b>${esc(k)}</b><span>${esc(v)}</span>` : '';
+    $('infoBody').innerHTML = `<button class="iconbtn x" onclick="document.getElementById('info').close()" aria-label="قفل">✕</button>
+      <div class="visual" style="display:grid;place-items:center;padding:6px 0 14px">${g.image ? `<div class="frame"><img src="${esc(g.image)}" alt="${esc(g.name)}"></div>` : `<div class="mono">${esc(g.name.charAt(0))}</div>`}</div>
+      <h3 style="font-family:'Readex Pro',sans-serif;font-size:32px;margin:0;direction:ltr;text-align:right;unicode-bidi:plaintext">${esc(g.name)}</h3>
+      <p style="color:var(--muted);margin:2px 0 0">${esc(g.brand)}</p>
+      <div class="tags">${[g.gender, g.local ? 'محلي' : '', g.year, g.origin].filter(Boolean).map(t => `<span>${esc(t)}</span>`).join('')}</div>
+      <div class="sect"><h4>الريحة</h4><div class="kv">${row('نوع الريحة', g.type)}${row('عجلة العطور', g.wheel)}</div></div>
+      ${g.tags.length ? `<div class="sect"><h4>مناسب لـ</h4><div class="notes">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div></div>` : ''}
+      ${g.notes.length ? `<div class="sect"><h4>المكونات (${ar(g.notes.length)})</h4><div class="notes">${g.notes.map(n => `<span>${esc(n)}</span>`).join('')}</div></div>` : ''}
+      ${g.descAr ? `<div class="sect"><h4>الوصف</h4><p class="desc">${esc(g.descAr)}</p></div>` : ''}
+      ${g.descEn ? `<div class="sect"><h4>${g.descAr ? 'النص الأصلي' : 'الوصف (إنجليزي)'}</h4><p class="en">${esc(g.descEn)}</p></div>` : ''}
+      <p class="small" style="margin-top:18px">المصدر: ${esc(DB.source)}</p>`;
+    $('info').showModal();
+  }
+  function showMore() { if (!MORE) return; const y = $('list').scrollTop; SHOWN += PAGE; renderList(); $('list').scrollTop = y; }
+  $('list').addEventListener('click', e => {
+    if (e.target.id === 'more') return showMore();
+    const r = e.target.closest('[data-gid]'); if (!r) return;
+    const y = $('list').scrollTop; cur = r.dataset.gid; renderList(); $('list').scrollTop = y;
+    $('pv').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  $('pv').addEventListener('click', e => { const b = e.target.closest('[data-info]'); if (b) openInfo(byGid(b.dataset.info)); });
+  $('info').addEventListener('click', e => { if (e.target === $('info')) $('info').close(); });
+  $('list').addEventListener('scroll', () => { const l = $('list'); if (MORE && l.scrollTop + l.clientHeight > l.scrollHeight - 300) showMore(); }, { passive: true });
+  let qT; $('q').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { query = e.target.value; SHOWN = PAGE; $('list').scrollTop = 0; renderList(); }, 120); });
+  $('filters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; gender = b.dataset.f;
+    $('filters').querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); SHOWN = PAGE; renderList(); });
+
+  // ---------- automatic suggestions (no AI: fixed rules over the table, instant)
+  const OPTS = { gender: ['حريمي', 'رجالي', 'للجنسين'], occasion: ['شغل أو جامعة', 'خروجة', 'سهرة', 'ميعاد', 'رياضة', 'مناسبة رسمية'], style: ['منعشة', 'نضيفة وخفيفة', 'حلوة', 'دافية وتقيلة'], season: ['صيف', 'شتاء'] };
+  const STYLE_WORDS = { 'منعشة': ['حمضي', 'مائي', 'منعش', 'أخضر', 'بحري', 'شاي', 'ملحي', 'ليمون', 'برغموت'], 'نضيفة وخفيفة': ['مسكي', 'مسك', 'نضيف', 'بودري', 'زهري', 'صابون', 'سوسن'],
+    'حلوة': ['حلو', 'فانيلي', 'فانيليا', 'جورماند', 'كراميل', 'فاكهي', 'شوكولاتة', 'عسل', 'لوز', 'تونكا'], 'دافية وتقيلة': ['عنبري', 'عنبر', 'عود', 'شرقي', 'توابل', 'جلدي', 'تبغ', 'بخور', 'خشبي', 'باتشولي'] };
+  const OCC_TAG = { 'شغل أو جامعة': 'شغل وجامعة', 'خروجة': 'خروجات', 'سهرة': 'سهرات', 'ميعاد': 'رومانسي', 'رياضة': 'رياضة', 'مناسبة رسمية': 'مناسبات رسمية' };
+  const answers = { gender: '', occasion: '', style: '', season: '' }, TYPES = new Set(); let COUNT = 24;
+  function readFree(a) {                         // what you write wins over the chips
+    const f = a.free || '', pick = (o, v) => v || o;
+    a.season = pick(a.season, /صيف/.test(f) ? 'صيف' : /شتا|شتو/.test(f) ? 'شتاء' : '');
+    a.style = pick(a.style, /خفيف|منعش|فريش/.test(f) ? 'منعشة' : /حلو|فانيل|سكر/.test(f) ? 'حلوة' : /تقيل|دافي|عود|شرقي/.test(f) ? 'دافية وتقيلة' : /نضيف|مسك/.test(f) ? 'نضيفة وخفيفة' : '');
+    a.occasion = pick(a.occasion, /سهر|حفل|فرح/.test(f) ? 'سهرة' : /شغل|جامع|مكتب/.test(f) ? 'شغل أو جامعة' : /رياض|جيم/.test(f) ? 'رياضة' : /خروج/.test(f) ? 'خروجة' : /ميعاد|رومانس/.test(f) ? 'ميعاد' : '');
+    a.gender = pick(a.gender, /للجنسين|يونيسكس/.test(f) ? 'للجنسين' : /حريمي|بنات|ستات|نسائي/.test(f) ? 'حريمي' : /رجالي|رجال/.test(f) ? 'رجالي' : '');
+    return a;
+  }
+  function autoPick(a) {
+    a = readFree(Object.assign({}, a));
+    const words = norm(a.free || '').split(/[\s،,]+/).filter(w => w.length > 2 && !/^(عايز|عاوز|حاجه|حاجة|فيها|للجامعه|للجامعة|صيفي|شتوي|خفيفه|خفيفة)$/.test(w));
+    const out = [];
+    GUIDE.forEach(g => {
+      if (!inScope(g)) return;
+      if (a.gender && g.gender !== a.gender && g.gender !== 'للجنسين') return;
+      let s = 0; const why = [];
+      if (TYPES.size) { const gt = g.type.split(/\s*·\s*/), hit = [...TYPES].filter(t => gt.includes(t)); if (!hit.length) return; s += 3 * hit.length; why.push(hit.join(' و ')); }
+      if (a.season && g.tags.includes(a.season)) { s += 3; why.push(a.season === 'صيف' ? 'صيفي' : 'شتوي'); }
+      const ot = OCC_TAG[a.occasion]; if (ot && g.tags.includes(ot)) { s += 3; why.push('لل' + ot.replace(/^ال/, '')); }
+      if (a.style) { const hay = g.type + ' ' + g.notes.join(' '); const w = (STYLE_WORDS[a.style] || []).find(x => hay.includes(x)); if (w) { s += 3; why.push(a.style); } }
+      let hitW = 0; words.forEach(w => { if (g._s.includes(w)) { s += 2; hitW++; } }); if (hitW) why.push('فيه اللي طلبته');
+      if (g.image) s += .3; if (g.local) s += .3;
+      if (s >= 3) out.push({ gid: g.gid, s, reason: [...new Set(why)].join(' · ') });
+    });
+    out.sort((x, y) => y.s - x.s);
+    if (!COUNT) return out;
+    const per = {}, res = [];                    // short lists: some variety, at most 2 per brand
+    for (const x of out) { const b = byGid(x.gid).brand; if ((per[b] = (per[b] || 0) + 1) <= 2) res.push(x); if (res.length >= COUNT) break; }
+    return res;
+  }
+  function renderTypes() {
+    const freq = {};
+    GUIDE.filter(inScope).forEach(g => g.type.split(/\s*·\s*/).filter(Boolean).forEach(t => { freq[t] = (freq[t] || 0) + 1; }));
+    $('types').innerHTML = Object.keys(freq).sort((a, b) => freq[b] - freq[a]).map(t => `<button class="chip ${TYPES.has(t) ? 'on' : ''}" data-t="${esc(t)}">${esc(t)} <small>${ar(freq[t])}</small></button>`).join('');
+  }
+  function renderCounts() { $('howMany').innerHTML = [12, 24, 48, 0].map(n => `<button class="chip ${n === COUNT ? 'on' : ''}" data-n="${n}">${n ? ar(n) : 'الكل'}</button>`).join(''); }
+  document.querySelectorAll('#sec-reco .chips[data-k]').forEach(box => {
+    const k = box.dataset.k;
+    box.innerHTML = OPTS[k].map(o => `<button class="chip" data-v="${o}">${o}</button>`).join('');
+    box.onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; answers[k] = answers[k] === b.dataset.v ? '' : b.dataset.v;
+      box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === answers[k])); };
+  });
+  $('types').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; const t = b.dataset.t; TYPES.has(t) ? TYPES.delete(t) : TYPES.add(t); b.classList.toggle('on'); });
+  $('howMany').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b) return; COUNT = +b.dataset.n; renderCounts(); });
+  $('go').onclick = () => {
+    const free = $('free').value.trim();
+    if (!answers.gender && !answers.occasion && !answers.style && !answers.season && !free && !TYPES.size) { $('recoMsg').textContent = 'اختار حاجة واحدة على الأقل أو اكتب طلبك'; return; }
+    const items = autoPick(Object.assign({ free }, answers));
+    if (!items.length) { $('recoMsg').textContent = 'مفيش برفانات تناسب الاختيارات دي، جرّب تقلل الشروط'; return; }
+    $('recoMsg').textContent = '';
+    RES = {}; RESLIST = items.map(x => { RES[x.gid] = x.reason; return x.gid; });
+    query = ''; $('q').value = ''; gender = ''; $('filters').querySelectorAll('.chip').forEach((c, i) => c.classList.toggle('on', i === 0));
+    $('airesTxt').textContent = `⚡ ${ar(items.length)} اقتراح، مرتبين من الأنسب`; $('aires').hidden = false;
+    cur = null; SHOWN = PAGE; renderList(); show('list');
+  };
+  $('clearAi').onclick = () => { RES = null; RESLIST = []; $('aires').hidden = true; SHOWN = PAGE; renderList(); };
+  $('resetReco').onclick = () => { Object.keys(answers).forEach(k => { answers[k] = ''; }); TYPES.clear(); $('free').value = ''; $('recoMsg').textContent = '';
+    document.querySelectorAll('#sec-reco .chip').forEach(c => c.classList.remove('on')); renderTypes(); renderCounts(); };
+  renderCounts();
+
+  // ---------- start
+  $('sub').textContent = GUIDE.length ? ar(GUIDE.length) + ' برفان · ابحث، قارن، واختار' : 'حط ملف perfumes.js جنب الصفحة';
+  setScope(store.get('ayman-scope') || 'local');
+</script>
+</body>
+</html>
