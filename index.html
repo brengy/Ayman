@@ -503,22 +503,41 @@
       `رد بـ JSON بس من غير أي كلام تاني، بالشكل ده: {"stores":[{"store":"اسم المحل","price":سعر بالجنيه رقم أو null,"size":"100ml","url":"لينك صفحة المنتج","in_stock":true}]} ` +
       `حد أقصى ٦ محلات. لو مش متأكد من محل متكتبوش. لو ملقيتش، رجّع {"stores":[]}.`;
     const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } };
-    let out = null, err = 'الذكاء الاصطناعي مش متاح دلوقتي، جرّب كمان شوية.';
-    for (const m of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest']) {
-      try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!res.ok) { const t = await res.text(); if (res.status === 400 && /API key/i.test(t)) { err = 'المفتاح مش صح. اتأكد منه في ⚙.'; break; } if (res.status === 429 && !/limit: 0/.test(t)) { err = 'اتعدّى عدد البحث المسموح، استنى دقيقة.'; break; } continue; }
-        const d = await res.json(), c = d.candidates && d.candidates[0];
-        const text = (c && c.content && c.content.parts || []).map(p => p.text || '').join('');
-        const a = text.indexOf('{'), b = text.lastIndexOf('}');
-        let parsed = { stores: [] }; try { parsed = JSON.parse(text.slice(a, b + 1)); } catch (e) {}
-        const chunks = (c && c.groundingMetadata && c.groundingMetadata.groundingChunks) || [];
-        out = { stores: (parsed.stores || []).filter(x => x && x.store).slice(0, 6).map(x => ({ store: String(x.store).slice(0, 60), price: +x.price || null, size: x.size ? String(x.size).slice(0, 20) : '', url: /^https?:\/\//.test(x.url || '') ? x.url : '', in_stock: x.in_stock })),
-          sources: chunks.map(k => k.web).filter(Boolean).map(w => ({ uri: w.uri, title: w.title })), date: new Date().toISOString().slice(0, 10) };
-        if (!out.stores.length) out.empty = true;
-        break;
-      } catch (e) { err = 'مفيش إنترنت أو الاتصال اتقطع.'; }
+    let out = null, err = 'الذكاء الاصطناعي مش متاح دلوقتي، جرّب كمان شوية.', detail = '';
+    // the key can be sent 3 ways; some keys (e.g. «AQ.…») only work with one of them
+    const AUTH = [k => ({ q: '', h: { 'x-goog-api-key': k } }), k => ({ q: '?key=' + encodeURIComponent(k), h: {} }), k => ({ q: '', h: { Authorization: 'Bearer ' + k } })];
+    const savedAuth = +(store.get('ayman-auth') || 0);
+    const auths = [savedAuth].concat([0, 1, 2].filter(x => x !== savedAuth));
+    outer:
+    for (const m of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest']) {
+      for (const ai of auths) {
+        const a = AUTH[ai](key);
+        let res;
+        try {
+          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent${a.q}`, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, a.h), body: JSON.stringify(body) });
+        } catch (e) { err = 'مفيش إنترنت أو الاتصال اتقطع.'; detail = String(e.message || e); break outer; }
+        if (res.ok) {
+          store.set('ayman-auth', String(ai));
+          const d = await res.json(), c = d.candidates && d.candidates[0];
+          const text = (c && c.content && c.content.parts || []).map(p => p.text || '').join('');
+          const x0 = text.indexOf('{'), x1 = text.lastIndexOf('}');
+          let parsed = { stores: [] }; try { parsed = JSON.parse(text.slice(x0, x1 + 1)); } catch (e) {}
+          const chunks = (c && c.groundingMetadata && c.groundingMetadata.groundingChunks) || [];
+          out = { stores: (parsed.stores || []).filter(x => x && x.store).slice(0, 6).map(x => ({ store: String(x.store).slice(0, 60), price: +x.price || null, size: x.size ? String(x.size).slice(0, 20) : '', url: /^https?:\/\//.test(x.url || '') ? x.url : '', in_stock: x.in_stock })),
+            sources: chunks.map(k => k.web).filter(Boolean).map(w => ({ uri: w.uri, title: w.title })), date: new Date().toISOString().slice(0, 10) };
+          if (!out.stores.length) out.empty = true;
+          break outer;
+        }
+        const t = await res.text();
+        let msg = t; try { const j = JSON.parse(t); msg = (j.error && (j.error.status + ': ' + j.error.message)) || t; } catch (e) {}
+        detail = `${m} · ${res.status} · ${String(msg).slice(0, 220)}`;
+        console.warn('Gemini', detail);
+        if (res.status === 401 || res.status === 403 || (res.status === 400 && /API key|API_KEY|credential|auth/i.test(t))) continue;   // try the next way of sending the key
+        if (res.status === 429 && !/limit: 0/.test(t)) { err = 'اتعدّى عدد البحث المسموح، استنى دقيقة وجرّب تاني.'; break outer; }
+        break;                                                                                                                  // try the next model
+      }
     }
+    if (!out && detail) err += ' (التفاصيل: ' + detail + ')';
     if (out) { lastAI[ekey(g)] = out; store.set('ayman-egypt-ai', JSON.stringify(lastAI)); renderEgSect(g); }
     else { btn.disabled = false; btn.textContent = '🔎 دوّر في مصر بالذكاء الاصطناعي'; msg.textContent = err; }
   }
