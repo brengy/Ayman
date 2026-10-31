@@ -505,17 +505,19 @@
     const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } };
     let out = null, err = 'الذكاء الاصطناعي مش متاح دلوقتي، جرّب كمان شوية.', detail = '';
     // the key can be sent 3 ways; some keys (e.g. «AQ.…») only work with one of them
-    const AUTH = [k => ({ q: '', h: { 'x-goog-api-key': k } }), k => ({ q: '?key=' + encodeURIComponent(k), h: {} }), k => ({ q: '', h: { Authorization: 'Bearer ' + k } })];
+    const AUTH = [k => ({ q: '', h: { 'x-goog-api-key': k } }), k => ({ q: '?key=' + encodeURIComponent(k), h: {} }), k => ({ q: '', h: { Authorization: 'Bearer ' + k } }),
+      k => ({ q: '?key=' + encodeURIComponent(k), h: {}, vertex: true })];   // Vertex AI express keys («AQ.…»)
     const savedAuth = +(store.get('ayman-auth') || 0);
-    const auths = [savedAuth].concat([0, 1, 2].filter(x => x !== savedAuth));
+    const auths = [savedAuth].concat([0, 1, 2, 3].filter(x => x !== savedAuth));
     outer:
     for (const m of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest']) {
       for (const ai of auths) {
         const a = AUTH[ai](key);
         let res;
         try {
-          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent${a.q}`, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, a.h), body: JSON.stringify(body) });
-        } catch (e) { err = 'مفيش إنترنت أو الاتصال اتقطع.'; detail = String(e.message || e); break outer; }
+          const base = a.vertex ? `https://aiplatform.googleapis.com/v1/publishers/google/models/${m}:generateContent` : `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
+          res = await fetch(base + a.q, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, a.h), body: JSON.stringify(body) });
+        } catch (e) { if (a.vertex) continue; err = 'مفيش إنترنت أو الاتصال اتقطع.'; detail = String(e.message || e); break outer; }
         if (res.ok) {
           store.set('ayman-auth', String(ai));
           const d = await res.json(), c = d.candidates && d.candidates[0];
@@ -537,6 +539,7 @@
         break;                                                                                                                  // try the next model
       }
     }
+    if (!out && /\b401\b|UNAUTHENTICATED|API key not valid|API_KEY_INVALID/.test(detail)) err = 'جوجل رفض مفتاح Gemini (ممكن يكون اتقفل أو نوعه مختلف). اعمل مفتاح جديد من aistudio.google.com/apikey وحطه في ⚙.';
     if (!out && detail) err += ' (التفاصيل: ' + detail + ')';
     if (out) { lastAI[ekey(g)] = out; store.set('ayman-egypt-ai', JSON.stringify(lastAI)); renderEgSect(g); }
     else { btn.disabled = false; btn.textContent = '🔎 دوّر في مصر بالذكاء الاصطناعي'; msg.textContent = err; }
