@@ -330,6 +330,7 @@
     });
     GUIDE.forEach(g => { g._base = norm(g.name + ' ' + g.brand + ' ' + g.type + ' ' + g.notes.join(' ')); g._s = g._base; });
   }
+  let AFTER_LINK = null;   // perfume to reopen after linking GitHub
   let SCOPE = 'local', query = '', gender = '', cur = null, SHOWN = 150, MORE = false, EG_ONLY = false, PRICED = false;
   const PAGE = 150;
   let RES = null, RESLIST = [];   // automatic suggestions: { gid: reason } and their order
@@ -545,7 +546,10 @@
     const shown = `${p.price ? `<p class="pnow">${money(p.price)}</p>` : ''}${where.length ? `<p class="small" style="margin:2px 0 6px">متوفر في: <b>${esc(where.join('، '))}</b></p>` : ''}`;
     if (!isAdmin()) {                                   // visitors: read only
       box.innerHTML = `<h4>السعر في مصر</h4>${shown || '<p class="small">لسه متسجلش سعر.</p>'}${p.date ? `<p class="small">آخر تحديث: ${esc(p.date)}</p>` : ''}
-        <a class="btn2 gbtn" href="https://www.google.com/search?q=${q}&gl=eg&hl=ar" target="_blank" rel="noopener">🔎 ابحث في جوجل ↗</a>`;
+        <a class="btn2 gbtn" href="https://www.google.com/search?q=${q}&gl=eg&hl=ar" target="_blank" rel="noopener">🔎 ابحث في جوجل ↗</a>
+        <button class="btn" id="pAdd" style="width:100%;margin-top:6px">✏️ ${p.price || shopNames(p).length ? 'تعديل السعر' : 'إضافة سعر'}</button>
+        <p class="small" style="margin-top:6px">الإضافة للإدارة بس: بتطلب ربط GitHub مرة واحدة.</p>`;
+      box.querySelector('#pAdd').onclick = () => { $('info').close(); AFTER_LINK = g.gid; $('settings').click(); setTimeout(() => $('ghToken').focus(), 150); };
       return;
     }
     box.innerHTML = `<h4>السعر في مصر</h4>${shown}
@@ -589,7 +593,8 @@
     const c = { repo: $('ghRepo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, ''), branch: $('ghBranch').value.trim() || 'main', path: $('ghPath').value.trim() || 'prices.js', token: $('ghToken').value.trim() };
     if (!/^[\w.-]+\/[\w.-]+$/.test(c.repo) || !c.token) { $('ghMsg').textContent = 'اكتب الريبو بالشكل username/repo والتوكن'; return; }
     store.set('ayman-gh', JSON.stringify(c)); $('ghMsg').textContent = 'بيجرّب…';
-    try { const cur = await ghApi('GET'); $('ghMsg').textContent = '✓ اتربط · ' + (cur ? 'لقيت ' + c.path + ' في الريبو.' : c.path + ' مش موجود، وهيتعمل مع أول سعر.'); renderList(); }
+    try { const cur = await ghApi('GET'); $('ghMsg').textContent = '✓ اتربط · ' + (cur ? 'لقيت ' + c.path + ' في الريبو.' : c.path + ' مش موجود، وهيتعمل مع أول سعر.'); renderList();
+      if (AFTER_LINK) { const g = byGid(AFTER_LINK); AFTER_LINK = null; setTimeout(() => { $('set').close(); if (g) { openInfo(g); setTimeout(() => $('egSect').scrollIntoView({ behavior: 'smooth', block: 'center' }), 150); } }, 900); } }
     catch (e) { $('ghMsg').textContent = 'مقدرناش نوصل: ' + e.message; }
   };
   $('ghOut').onclick = () => { store.set('ayman-gh', null); $('ghToken').value = ''; $('ghMsg').textContent = 'اتقطع الربط.'; };
