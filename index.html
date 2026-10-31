@@ -167,6 +167,16 @@
   .eg-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
   .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line-2); border-top-color: var(--a2); border-radius: 50%; animation: sp 1s linear infinite; vertical-align: -3px; margin-inline-end: 6px; }
   @keyframes sp { to { transform: rotate(360deg); } }
+  /* big image viewer */
+  #viewer { width: min(720px, 96vw); max-height: 94vh; padding: 0; border: 1px solid var(--line-2); border-radius: 24px; background: var(--bg); color: var(--ink); }
+  #viewer::backdrop { background: rgba(5,2,12,.82); }
+  .vwrap { position: relative; padding: 16px 16px 18px; display: grid; justify-items: center; gap: 10px; }
+  .vwrap img { max-width: 100%; max-height: 72vh; object-fit: contain; background: #fff; border-radius: 18px; padding: 10px; cursor: zoom-out; }
+  .vclose { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 1; }
+  .vname { margin: 0; font-weight: 600; text-align: center; direction: ltr; unicode-bidi: plaintext; }
+  .vbtns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .vbtns a { text-decoration: none; display: inline-flex; align-items: center; }
+  .frame img, #infoBody .frame img { cursor: zoom-in; }
   .pick { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
   .pick label { flex: 1; font-weight: 600; }
   .pick input[type=color] { width: 54px; height: 42px; border: 1px solid var(--line-2); border-radius: 12px; background: none; padding: 3px; cursor: pointer; }
@@ -259,6 +269,14 @@
     <button class="fab" role="tab" data-go="reco" aria-selected="false"><span class="c"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19 9.5l-5.2 1.9L12 17l-1.8-5.6L5 9.5l5.2-1.9L12 2z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" opacity=".7"/></svg></span>رشّحلي</button>
   </nav>
 </div>
+
+<!-- big image viewer -->
+<dialog id="viewer" aria-label="صورة البرفان"><div class="vwrap">
+  <button class="iconbtn vclose" id="vClose" aria-label="قفل">✕</button>
+  <img id="vImg" alt="">
+  <p class="vname" id="vName"></p>
+  <div class="vbtns"><button class="btn" id="vSave" style="margin:0">⬇ حفظ الصورة</button><a class="btn2" id="vOpen" target="_blank" rel="noopener">↗ افتح في تاب جديد</a></div>
+</div></dialog>
 
 <!-- choose your own colours -->
 <dialog id="colors"><div class="dlg">
@@ -468,7 +486,9 @@
       ${g.tags.length ? `<div class="tags">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
       <button class="btn" data-info="${g.gid}">ⓘ كل المعلومات</button></div>`;
   }
+  let INFO_G = null;
   function openInfo(g) {
+    INFO_G = g;
     const row = (k, v) => v ? `<b>${esc(k)}</b><span>${esc(v)}</span>` : '';
     $('infoBody').innerHTML = `<button class="iconbtn x" onclick="document.getElementById('info').close()" aria-label="قفل">✕</button>
       <div class="visual" style="display:grid;place-items:center;padding:6px 0 14px">${g.image ? `<div class="frame"><img src="${esc(g.image)}" alt="${esc(g.name)}"></div>` : `<div class="mono">${esc(g.name.charAt(0))}</div>`}</div>
@@ -525,6 +545,37 @@
     const del = box.querySelector('#pDel');
     if (del) del.onclick = async () => { try { await savePrice(g, null); renderPriceSect(byGid(g.gid)); renderPreview(); } catch (e) { box.querySelector('#pMsg').textContent = 'محفظش: ' + e.message; } };
   }
+
+  // ---------- open a perfume image big, with save / open
+  const bigUrl = u => String(u || '').replace('/image/upload/f_auto,q_auto,w_600/', '/image/upload/f_auto,q_auto,w_1400/');
+  const fileName = g => (g.brand + ' - ' + g.name).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.jpg';
+  let VG = null;
+  function openViewer(g) {
+    if (!g || !g.image) return;
+    VG = g; const u = bigUrl(g.image);
+    $('vImg').src = u; $('vImg').alt = g.name; $('vName').textContent = g.brand + ' · ' + g.name; $('vOpen').href = u;
+    $('vSave').disabled = false; $('vSave').textContent = '⬇ حفظ الصورة';
+    $('viewer').showModal();
+  }
+  $('vSave').onclick = async () => {
+    const g = VG; if (!g) return; const u = bigUrl(g.image).replace('f_auto,', '');      // plain JPG so it opens everywhere
+    $('vSave').disabled = true; $('vSave').textContent = 'بيحفظ…';
+    try {
+      const blob = await (await fetch(u)).blob();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName(g); document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000); $('vSave').textContent = 'اتحفظت ✓';
+    } catch (e) { window.open(u, '_blank'); $('vSave').textContent = '⬇ حفظ الصورة'; }   // if the download is blocked, open it so it can be saved
+    $('vSave').disabled = false;
+  };
+  $('vClose').onclick = () => $('viewer').close();
+  $('vImg').onclick = () => $('viewer').close();
+  $('viewer').addEventListener('click', e => { if (e.target === $('viewer')) $('viewer').close(); });
+  // a click on the picture in the preview card or the info dialog opens it
+  document.addEventListener('click', e => {
+    const img = e.target.closest('#pv .frame img, #infoBody .frame img'); if (!img) return;
+    const inInfo = !!e.target.closest('#infoBody');
+    openViewer(inInfo ? INFO_G : byGid(cur));
+  });
 
   function showMore() { if (!MORE) return; const y = $('list').scrollTop; SHOWN += PAGE; renderList(); $('list').scrollTop = y; }
   $('list').addEventListener('click', e => {
