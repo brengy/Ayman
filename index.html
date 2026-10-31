@@ -403,7 +403,8 @@
   // ---------- list
   function renderList() {
     const q = norm(query);
-    let items = (RES ? RESLIST.map(byGid) : GUIDE).filter(g => inScope(g) && (!gender || g.gender === gender) && (!EG_ONLY || g.eg) && (!q || g._s.includes(q)));
+    const qw = q.split(/\s+/).filter(Boolean);                       // every word must match, in any order («benetton cold»)
+    let items = (RES ? RESLIST.map(byGid) : GUIDE).filter(g => inScope(g) && (!gender || g.gender === gender) && (!EG_ONLY || g.eg) && (!qw.length || qw.every(w => g._s.includes(w))));
     const total = items.length;
     $('count').textContent = total ? ar(total) + ' برفان' + (total > SHOWN ? ` · معروض ${ar(SHOWN)}` : '') : '';
     MORE = total > SHOWN; items = items.slice(0, SHOWN);
@@ -420,13 +421,21 @@
     ['فتحي إبراهيم', q => 'https://fathyibrahim.com/search?q=' + q],
     ['أمازون مصر', q => 'https://www.amazon.eg/s?k=' + q + '&language=ar_AE'],
     ['نون مصر', q => 'https://www.noon.com/egypt-ar/search/?q=' + q],
+    ['جوميا', q => 'https://www.jumia.com.eg/catalog/?q=' + q],
     ['جوجل شوبينج', q => 'https://www.google.com/search?tbm=shop&gl=eg&hl=ar&q=' + q],
   ];
   function storesHtml(g) {
     const clean = String(g.name).replace(/\([^)]*\)/g, ' ').replace(/\b(19|20)\d{2}\b/g, ' ');   // drop years and «(…)» so stores find it
     const q = encodeURIComponent((g.brand + ' ' + clean).replace(/\s+/g, ' ').trim());
-    return `<div class="where"><h4>فين ألاقيه في مصر؟</h4><div class="stores">${STORES.map(([n, u]) => `<a href="${u(q)}" target="_blank" rel="noopener">${n} ↗</a>`).join('')}</div>
-      <p class="small">بيدوّر باسم البرفان جوه المتجر. لو مش موجود هناك، النتايج هتبقى فاضية أو بديلة.</p></div>`;
+    // the whole brand: see everything a store has from it (e.g. Benetton → Cold, Hot, …)
+    const qb = encodeURIComponent(String(g.brand).trim() + ' perfume');
+    const BRAND_STORES = STORES.filter(([n]) => /أمازون|نون|جوميا|Faces/.test(n));
+    return `<div class="where"><h4>فين ألاقيه في مصر؟</h4>
+      ${g.local ? `<p class="small" style="margin:0 0 8px">✓ ماركة ${esc(g.brand)} منتشرة في مصر.</p>` : ''}
+      <div class="stores">${STORES.map(([n, u]) => `<a href="${u(q)}" target="_blank" rel="noopener">${n} ↗</a>`).join('')}</div>
+      <p class="small">بيدوّر باسم البرفان جوه المتجر. لو مش موجود هناك، النتايج هتبقى فاضية أو بديلة.</p>
+      <h4 style="margin-top:12px">كل برفانات ${esc(g.brand)}</h4>
+      <div class="stores">${BRAND_STORES.map(([n, u]) => `<a href="${u(qb)}" target="_blank" rel="noopener">${n} ↗</a>`).join('')}</div></div>`;
   }
   function renderPreview() {
     const g = cur && byGid(cur), pv = $('pv');
@@ -470,7 +479,7 @@
     const ok = g.eg, ai = lastAI[ekey(g)];
     let h = '<h4>متوفر في مصر</h4>';
     if (ok) h += `<div class="eg-list">${ok.stores.map((x, i) => storeRow(x, i, false, true)).join('')}</div>
-        <p class="eg-src">✓ مؤكد ${ok.date ? 'بتاريخ ' + esc(ok.date) : ''} · الأسعار بتتغير، اتأكد من المتجر. <button class="btn2" id="egRemove" style="padding:4px 12px;margin-inline-start:6px">شيل التأكيد</button></p>`;
+        <p class="eg-src">✓ مؤكد ${ok.date ? 'بتاريخ ' + esc(ok.date) : ''} · الأسعار بتتغير، اتأكد من المتجر.${ok.note ? ' ' + esc(ok.note) : ''} <button class="btn2" id="egRemove" style="padding:4px 12px;margin-inline-start:6px">شيل التأكيد</button></p>`;
     else h += '<p class="small">لسه مفيش معلومة مؤكدة.</p>';
     if (ai && ai.stores && ai.stores.length) {
       h += `<div class="q">نتيجة البحث بالذكاء الاصطناعي (${esc(ai.date || '')})</div><p class="small">علّم على اللي اتأكدت منه، ودوس «أكّد».</p>
@@ -491,7 +500,7 @@
     if (by('egDiscard')) by('egDiscard').onclick = () => { delete lastAI[ekey(g)]; store.set('ayman-egypt-ai', JSON.stringify(lastAI)); renderEgSect(g); };
     if (by('egRemove')) by('egRemove').onclick = () => { saveEG(g, null); renderEgSect(g); renderList(); };
   }
-  const BUILT_IN_KEY = 'AQ.Ab8RN6JZnAkEybaqaVzmWkBgaufmUyBCNLfrw6GcdUtXIZa7jg';   // fixed key: «دوّر في مصر» works with nothing to enter
+  const BUILT_IN_KEY = 'AQ.Ab8RN6I-djjvbDcPfzjmUVySkCGQDNQ1uikzLe2b_-jfbfRqtA';   // fixed key: «دوّر في مصر» works with nothing to enter
   async function findInEgypt(g) {
     const key = store.get('ayman-gemini-key') || BUILT_IN_KEY;
     const msg = $('egMsg'), btn = $('egFind');
@@ -503,14 +512,16 @@
       `رد بـ JSON بس من غير أي كلام تاني، بالشكل ده: {"stores":[{"store":"اسم المحل","price":سعر بالجنيه رقم أو null,"size":"100ml","url":"لينك صفحة المنتج","in_stock":true}]} ` +
       `حد أقصى ٦ محلات. لو مش متأكد من محل متكتبوش. لو ملقيتش، رجّع {"stores":[]}.`;
     const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } };
-    let out = null, err = 'الذكاء الاصطناعي مش متاح دلوقتي، جرّب كمان شوية.', detail = '';
+    let out = null, err = 'الذكاء الاصطناعي مش متاح دلوقتي، جرّب كمان شوية.', detail = '', waitSec = 0;
     // the key can be sent 3 ways; some keys (e.g. «AQ.…») only work with one of them
     const AUTH = [k => ({ q: '', h: { 'x-goog-api-key': k } }), k => ({ q: '?key=' + encodeURIComponent(k), h: {} }), k => ({ q: '', h: { Authorization: 'Bearer ' + k } }),
       k => ({ q: '?key=' + encodeURIComponent(k), h: {}, vertex: true })];   // Vertex AI express keys («AQ.…»)
     const savedAuth = +(store.get('ayman-auth') || 0);
     const auths = [savedAuth].concat([0, 1, 2, 3].filter(x => x !== savedAuth));
+    const okModel = store.get('ayman-search-model');
+    const MODELS_S = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest'];
     outer:
-    for (const m of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest']) {
+    for (const m of okModel ? [okModel].concat(MODELS_S.filter(x => x !== okModel)) : MODELS_S) {
       for (const ai of auths) {
         const a = AUTH[ai](key);
         let res;
@@ -519,7 +530,7 @@
           res = await fetch(base + a.q, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, a.h), body: JSON.stringify(body) });
         } catch (e) { if (a.vertex) continue; err = 'مفيش إنترنت أو الاتصال اتقطع.'; detail = String(e.message || e); break outer; }
         if (res.ok) {
-          store.set('ayman-auth', String(ai));
+          store.set('ayman-auth', String(ai)); store.set('ayman-search-model', m);
           const d = await res.json(), c = d.candidates && d.candidates[0];
           const text = (c && c.content && c.content.parts || []).map(p => p.text || '').join('');
           const x0 = text.indexOf('{'), x1 = text.lastIndexOf('}');
@@ -535,12 +546,26 @@
         detail = `${m} · ${res.status} · ${String(msg).slice(0, 220)}`;
         console.warn('Gemini', detail);
         if (res.status === 401 || res.status === 403 || (res.status === 400 && /API key|API_KEY|credential|auth/i.test(t))) continue;   // try the next way of sending the key
-        if (res.status === 429 && !/limit: 0/.test(t)) { err = 'اتعدّى عدد البحث المسموح، استنى دقيقة وجرّب تاني.'; break outer; }
+        if (res.status === 429 && !/limit: 0/.test(t)) {
+          const w = /"retryDelay"\s*:\s*"(\d+)/.exec(t); waitSec = w ? Math.min(90, +w[1] + 2) : 45;
+          err = 'اتعدّى عدد البحث المسموح.'; break outer;
+        }
         break;                                                                                                                  // try the next model
       }
     }
     if (!out && /\b401\b|UNAUTHENTICATED|API key not valid|API_KEY_INVALID/.test(detail)) err = 'جوجل رفض مفتاح Gemini (ممكن يكون اتقفل أو نوعه مختلف). اعمل مفتاح جديد من aistudio.google.com/apikey وحطه في ⚙.';
     if (!out && detail) err += ' (التفاصيل: ' + detail + ')';
+    if (!out && waitSec && !g._retried) {
+      g._retried = true;
+      for (let n = waitSec; n > 0; n--) {
+        if (!$('egFind') || !document.getElementById('info').open) { g._retried = false; return; }
+        $('egFind').innerHTML = `<span class="spin"></span>جوجل طالب نستنى… هنحاول تاني بعد ${ar(n)} ث`;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      return findInEgypt(g);
+    }
+    g._retried = false;
+    if (!out && waitSec) err = 'الحصة المجانية للبحث خلصت دلوقتي. جرّب بعد شوية، ولو فضلت كده يبقى حصة النهارده خلصت.';
     if (out) { lastAI[ekey(g)] = out; store.set('ayman-egypt-ai', JSON.stringify(lastAI)); renderEgSect(g); }
     else { btn.disabled = false; btn.textContent = '🔎 دوّر في مصر بالذكاء الاصطناعي'; msg.textContent = err; }
   }
@@ -560,11 +585,25 @@
   $('egImport').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     const t = await f.text(); let data = null;
-    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); } catch (x) {}
+    // accepts egypt.js / {key: entry}, or a chat's answer: [{brand, name, stores:[…]}]
+    const a = t.indexOf('['), o = t.indexOf('{');
+    try { data = (a >= 0 && (o < 0 || a < o)) ? JSON.parse(t.slice(a, t.lastIndexOf(']') + 1)) : JSON.parse(t.slice(o, t.lastIndexOf('}') + 1)); } catch (x) {}
     if (!data) { $('egStats').textContent = 'الملف مش مفهوم'; return; }
+    let added = {}, missed = [];
+    if (Array.isArray(data) || Array.isArray(data.items)) {
+      const today = new Date().toISOString().slice(0, 10);
+      (Array.isArray(data) ? data : data.items).forEach(it => {
+        if (!it || !it.name || !Array.isArray(it.stores) || !it.stores.length) return;
+        const g = GUIDE.find(x => norm(x.brand) === norm(it.brand) && norm(x.name) === norm(it.name)) || GUIDE.find(x => norm(x.name) === norm(it.name) && norm(x.brand).includes(norm(it.brand || '').split(' ')[0]));
+        if (!g) { missed.push((it.brand || '') + ' ' + it.name); return; }
+        const stores = it.stores.filter(x => x && x.store).slice(0, 8).map(x => ({ store: String(x.store).slice(0, 60), price: +x.price || null, size: x.size ? String(x.size).slice(0, 20) : '', url: /^https?:\/\//.test(x.url || '') ? x.url : '', in_stock: x.in_stock == null ? null : !!x.in_stock }));
+        if (stores.length) added[ekey(g)] = { stores, date: it.date || today, sources: stores.filter(x => x.url).map(x => ({ uri: x.url, title: x.store })) };
+      });
+    } else added = data;
     let local = {}; try { local = JSON.parse(store.get('ayman-egypt') || '{}'); } catch (x) {}
-    Object.assign(local, data); store.set('ayman-egypt', JSON.stringify(local)); loadEG(); renderList();
-    $('egStats').textContent = `اتضاف ✓ · ${ar(egCount())} برفان متوفرين في مصر.`;
+    Object.assign(local, added); store.set('ayman-egypt', JSON.stringify(local)); loadEG(); renderList();
+    $('egStats').textContent = `اتضاف ${ar(Object.keys(added).length)} ✓ · الإجمالي ${ar(egCount())} برفان متوفرين في مصر.` + (missed.length ? ` · مش لاقي ${ar(missed.length)} في الداتابيز: ${missed.slice(0, 5).join('، ')}` : '');
+    e.target.value = '';
   };
 
   function showMore() { if (!MORE) return; const y = $('list').scrollTop; SHOWN += PAGE; renderList(); $('list').scrollTop = y; }
