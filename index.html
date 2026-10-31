@@ -136,6 +136,27 @@
 </style>
 <style>
   .iconrow { display: flex; gap: 8px; }
+  .where { margin-top: 14px; }
+  .where h4 { font-family: "Readex Pro", sans-serif; font-size: 15.5px; margin: 0 0 8px; color: var(--a2); }
+  .stores { display: flex; flex-wrap: wrap; gap: 6px; }
+  .stores a { text-decoration: none; color: var(--ink); font-size: 13.5px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--field); }
+  .stores a:hover { background: var(--accent-soft); }
+  .where .small { margin: 8px 0 0; }
+  .eg-badge { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); border: 1px solid var(--line-2); color: var(--a2); white-space: nowrap; flex: none; }
+  .ai-find { margin-top: 12px; }
+  .ai-find .btn { width: 100%; margin-top: 4px; }
+  .eg-list { display: grid; gap: 8px; margin-top: 10px; }
+  .eg-item { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--field); }
+  .eg-item.ok { border-color: var(--line-2); }
+  .eg-item b { display: block; }
+  .eg-item small { color: var(--muted); }
+  .eg-item a { color: var(--a2); font-size: 13.5px; white-space: nowrap; }
+  .eg-item input { width: 20px; height: 20px; accent-color: var(--a2); }
+  .eg-src { font-size: 12.5px; color: var(--faint); margin-top: 8px; line-height: 1.7; }
+  .eg-src a { color: var(--a2); }
+  .eg-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line-2); border-top-color: var(--a2); border-radius: 50%; animation: sp 1s linear infinite; vertical-align: -3px; margin-inline-end: 6px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
   .pick { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
   .pick label { flex: 1; font-weight: 600; }
   .pick input[type=color] { width: 54px; height: 42px; border: 1px solid var(--line-2); border-radius: 12px; background: none; padding: 3px; cursor: pointer; }
@@ -160,6 +181,7 @@
   .btn2 { border: 1px solid var(--line-2); background: none; border-radius: 999px; padding: 10px 18px; color: var(--a2); }
 </style>
 <script src="perfumes.js"></script>
+<script src="egypt.js" onerror="window.AYMAN_EGYPT = window.AYMAN_EGYPT || {}"></script>
 </head>
 <body>
 <svg class="waves" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true">
@@ -173,6 +195,7 @@
   <header class="top">
     <span class="brand copper">Ayman</span>
     <div class="iconrow">
+      <button class="iconbtn" id="settings" aria-label="الإعدادات">⚙</button>
       <button class="iconbtn" id="paint" aria-label="اختار الألوان">🎨</button>
       <button class="iconbtn" id="theme" aria-label="تغيير الثيم"></button>
     </div>
@@ -199,7 +222,7 @@
       <input class="field" id="q" type="search" placeholder="دوّر بالاسم أو الماركة أو الريحة أو المكون" aria-label="بحث" autocomplete="off">
     </div>
     <div class="chips" id="filters">
-      <button class="chip on" data-f="">الكل</button><button class="chip" data-f="حريمي">حريمي</button><button class="chip" data-f="رجالي">رجالي</button><button class="chip" data-f="للجنسين">للجنسين</button>
+      <button class="chip on" data-f="">الكل</button><button class="chip" data-f="حريمي">حريمي</button><button class="chip" data-f="رجالي">رجالي</button><button class="chip" data-f="للجنسين">للجنسين</button><button class="chip" id="egOnly">🇪🇬 متوفر في مصر</button>
     </div>
     <div class="ai-res" id="aires" hidden><span id="airesTxt"></span><button id="clearAi">عرض الكل</button></div>
     <p class="count" id="count"></p>
@@ -227,6 +250,24 @@
     <button class="fab" role="tab" data-go="reco" aria-selected="false"><span class="c"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19 9.5l-5.2 1.9L12 17l-1.8-5.6L5 9.5l5.2-1.9L12 2z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" opacity=".7"/></svg></span>رشّحلي</button>
   </nav>
 </div>
+
+<!-- settings: Gemini key + confirmed availability (export / import) -->
+<dialog id="set"><div class="dlg">
+  <button class="iconbtn x" id="setClose" aria-label="قفل">✕</button>
+  <h3 style="font-family:'Readex Pro',sans-serif;margin:0 0 6px">الإعدادات</h3>
+  <div class="q">مفتاح Gemini (للبحث في مصر)</div>
+  <p class="small">فيه مفتاح متثبت في الصفحة وشغال لوحده. لو حطيت مفتاح تاني هنا، هيستخدمه بداله في المتصفح ده بس.</p>
+  <input class="field" id="key" type="password" placeholder="مفتاح تاني (اختياري)" autocomplete="off" style="direction:ltr;text-align:left;margin-top:8px">
+  <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="keySave" style="margin:0">احفظ المفتاح</button><button class="btn2" id="keyDel">امسحه</button></div>
+  <p class="small" id="keyMsg"></p>
+  <div class="q" style="margin-top:20px">التوفر في مصر (المؤكد)</div>
+  <p class="small" id="egStats"></p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+    <button class="btn" id="egExport" style="margin:0">⬇ تصدير egypt.js</button>
+    <label class="btn2" for="egImport" style="cursor:pointer">⬆ استيراد</label><input type="file" id="egImport" accept=".js,.json" hidden>
+  </div>
+  <p class="small">بعد التصدير، حط <b>egypt.js</b> جنب Ayman.html و perfumes.js (بدل القديم)، فيبقى جزء من الداتابيز لأي حد يفتح الصفحة.</p>
+</div></dialog>
 
 <!-- choose your own colours -->
 <dialog id="colors"><div class="dlg">
@@ -263,13 +304,30 @@
         tags: DB.tags.filter((t, k) => r[I.tags] & (1 << k)), image: img[0] === '~' ? DB.imgPre + img.slice(1) : img,
         descAr: r[I.descAr], descEn: r[I.descEn], wheel: r[I.wheel] };
     });
-    GUIDE.forEach(g => { g._s = norm(g.name + ' ' + g.brand + ' ' + g.type + ' ' + g.notes.join(' ')); });
+    GUIDE.forEach(g => { g._base = norm(g.name + ' ' + g.brand + ' ' + g.type + ' ' + g.notes.join(' ')); g._s = g._base; });
   }
-  let SCOPE = 'local', query = '', gender = '', cur = null, SHOWN = 150, MORE = false;
+  let SCOPE = 'local', query = '', gender = '', cur = null, SHOWN = 150, MORE = false, EG_ONLY = false;
   const PAGE = 150;
   let RES = null, RESLIST = [];   // automatic suggestions: { gid: reason } and their order
   const byGid = g => GUIDE.find(x => x.gid === g);
   const inScope = g => SCOPE !== 'local' || g.local;
+
+  // ---------- availability in Egypt: confirmed results (egypt.js file + this browser), keyed by brand|name
+  const ekey = g => norm(g.brand) + '|' + norm(g.name);
+  let EG = {};
+  function loadEG() {
+    let local = {}; try { local = JSON.parse(store.get('ayman-egypt') || '{}'); } catch (e) {}
+    EG = Object.assign({}, window.AYMAN_EGYPT || {}, local);
+    GUIDE.forEach(g => { const e = EG[ekey(g)]; g.eg = e && e.stores && e.stores.length ? e : null;
+      g.egMin = g.eg ? Math.min(...g.eg.stores.map(x => +x.price || Infinity)) : Infinity;
+      g._s = g._base + (g.eg ? ' ' + norm(g.eg.stores.map(x => x.store).join(' ')) + ' مصر متوفر' : ''); });
+  }
+  function saveEG(g, entry) {
+    let local = {}; try { local = JSON.parse(store.get('ayman-egypt') || '{}'); } catch (e) {}
+    if (entry) local[ekey(g)] = entry; else { local[ekey(g)] = { stores: [], removed: true }; }
+    store.set('ayman-egypt', JSON.stringify(local)); loadEG();
+  }
+  const money = n => n && isFinite(n) ? ar(n) + ' ج' : '';
 
   // ---------- theme
   const SUN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
@@ -345,16 +403,30 @@
   // ---------- list
   function renderList() {
     const q = norm(query);
-    let items = (RES ? RESLIST.map(byGid) : GUIDE).filter(g => inScope(g) && (!gender || g.gender === gender) && (!q || g._s.includes(q)));
+    let items = (RES ? RESLIST.map(byGid) : GUIDE).filter(g => inScope(g) && (!gender || g.gender === gender) && (!EG_ONLY || g.eg) && (!q || g._s.includes(q)));
     const total = items.length;
     $('count').textContent = total ? ar(total) + ' برفان' + (total > SHOWN ? ` · معروض ${ar(SHOWN)}` : '') : '';
     MORE = total > SHOWN; items = items.slice(0, SHOWN);
     $('list').innerHTML = items.length ? items.map(g => `<button class="row ${g.gid === cur ? 'on' : ''}" role="option" aria-selected="${g.gid === cur}" data-gid="${g.gid}">
         <span class="th">${g.image ? `<img src="${esc(g.image)}" alt="" loading="lazy">` : `<span>${esc(g.name.charAt(0))}</span>`}</span>
         <span class="rinfo"><span class="rname">${esc(g.name)}</span><span class="rmeta">${esc(g.brand)}${g.type ? ' · ' + esc(g.type) : ''}</span>${RES && RES[g.gid] ? `<span class="why">⚡ ${esc(RES[g.gid])}</span>` : ''}</span>
-        ${g.gender ? `<span class="gb">${esc(g.gender)}</span>` : ''}</button>`).join('') + (MORE ? '<button class="more" id="more">اعرض ١٥٠ كمان</button>' : '')
+        ${g.eg ? `<span class="eg-badge">🇪🇬 ${g.egMin < Infinity ? 'من ' + money(g.egMin) : 'متوفر'}</span>` : g.gender ? `<span class="gb">${esc(g.gender)}</span>` : ''}</button>`).join('') + (MORE ? '<button class="more" id="more">اعرض ١٥٠ كمان</button>' : '')
       : `<div class="empty">${GUIDE.length ? 'مفيش نتايج' : 'ملف perfumes.js مش موجود جنب الصفحة'}</div>`;
     renderPreview();
+  }
+  // where to find it in Egypt: searches by name + brand inside each store (availability and price are shown there)
+  const STORES = [
+    ['Faces مصر', q => 'https://www.faces.eg/ar/search?q=' + q],
+    ['فتحي إبراهيم', q => 'https://fathyibrahim.com/search?q=' + q],
+    ['أمازون مصر', q => 'https://www.amazon.eg/s?k=' + q + '&language=ar_AE'],
+    ['نون مصر', q => 'https://www.noon.com/egypt-ar/search/?q=' + q],
+    ['جوجل شوبينج', q => 'https://www.google.com/search?tbm=shop&gl=eg&hl=ar&q=' + q],
+  ];
+  function storesHtml(g) {
+    const clean = String(g.name).replace(/\([^)]*\)/g, ' ').replace(/\b(19|20)\d{2}\b/g, ' ');   // drop years and «(…)» so stores find it
+    const q = encodeURIComponent((g.brand + ' ' + clean).replace(/\s+/g, ' ').trim());
+    return `<div class="where"><h4>فين ألاقيه في مصر؟</h4><div class="stores">${STORES.map(([n, u]) => `<a href="${u(q)}" target="_blank" rel="noopener">${n} ↗</a>`).join('')}</div>
+      <p class="small">بيدوّر باسم البرفان جوه المتجر. لو مش موجود هناك، النتايج هتبقى فاضية أو بديلة.</p></div>`;
   }
   function renderPreview() {
     const g = cur && byGid(cur), pv = $('pv');
@@ -364,6 +436,7 @@
       <div class="body"><h3>${esc(g.name)}</h3><div class="brandline">${esc(g.brand)}${g.gender ? ' · ' + esc(g.gender) : ''}${g.year ? ' · ' + esc(g.year) : ''}</div>
       <div class="kv">${g.type ? `<b>نوع الريحة</b><span>${esc(g.type)}</span>` : ''}${g.special ? `<b>مميز في إيه</b><span>${esc(g.special)}</span>` : ''}</div>
       ${g.tags.length ? `<div class="tags">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
+      ${storesHtml(g)}
       <button class="btn" data-info="${g.gid}">ⓘ كل المعلومات</button></div>`;
   }
   function openInfo(g) {
@@ -378,9 +451,100 @@
       ${g.notes.length ? `<div class="sect"><h4>المكونات (${ar(g.notes.length)})</h4><div class="notes">${g.notes.map(n => `<span>${esc(n)}</span>`).join('')}</div></div>` : ''}
       ${g.descAr ? `<div class="sect"><h4>الوصف</h4><p class="desc">${esc(g.descAr)}</p></div>` : ''}
       ${g.descEn ? `<div class="sect"><h4>${g.descAr ? 'النص الأصلي' : 'الوصف (إنجليزي)'}</h4><p class="en">${esc(g.descEn)}</p></div>` : ''}
+      <div class="sect" id="egSect"></div>
+      <div class="sect">${storesHtml(g)}</div>
       <p class="small" style="margin-top:18px">المصدر: ${esc(DB.source)}</p>`;
+    renderEgSect(g);
     $('info').showModal();
   }
+  // ---------- «🔎 دوّر في مصر بالذكاء الاصطناعي» (Gemini + Google Search)
+  let lastAI = {};                                                    // ekey -> last AI result (not confirmed yet)
+  try { lastAI = JSON.parse(store.get('ayman-egypt-ai') || '{}'); } catch (e) {}
+  function storeRow(x, i, pickable, okd) {
+    return `<div class="eg-item ${okd ? 'ok' : ''}">${pickable ? `<input type="checkbox" data-pick="${i}" checked aria-label="أكّد ${esc(x.store)}">` : '<span>✓</span>'}
+      <span><b>${esc(x.store)}</b><small>${[money(+x.price), x.size ? esc(x.size) : '', x.in_stock === false ? 'مش متوفر دلوقتي' : ''].filter(Boolean).join(' · ')}</small></span>
+      ${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">افتح ↗</a>` : '<span></span>'}</div>`;
+  }
+  function renderEgSect(g) {
+    const box = $('egSect'); if (!box) return;
+    const ok = g.eg, ai = lastAI[ekey(g)];
+    let h = '<h4>متوفر في مصر</h4>';
+    if (ok) h += `<div class="eg-list">${ok.stores.map((x, i) => storeRow(x, i, false, true)).join('')}</div>
+        <p class="eg-src">✓ مؤكد ${ok.date ? 'بتاريخ ' + esc(ok.date) : ''} · الأسعار بتتغير، اتأكد من المتجر. <button class="btn2" id="egRemove" style="padding:4px 12px;margin-inline-start:6px">شيل التأكيد</button></p>`;
+    else h += '<p class="small">لسه مفيش معلومة مؤكدة.</p>';
+    if (ai && ai.stores && ai.stores.length) {
+      h += `<div class="q">نتيجة البحث بالذكاء الاصطناعي (${esc(ai.date || '')})</div><p class="small">علّم على اللي اتأكدت منه، ودوس «أكّد».</p>
+        <div class="eg-list">${ai.stores.map((x, i) => storeRow(x, i, true, false)).join('')}</div>
+        ${ai.sources && ai.sources.length ? `<p class="eg-src">المصادر: ${ai.sources.slice(0, 6).map(x => `<a href="${esc(x.uri)}" target="_blank" rel="noopener">${esc(x.title || 'مصدر')}</a>`).join(' · ')}</p>` : ''}
+        <div class="eg-actions"><button class="btn" id="egConfirm" style="margin:0">✓ أكّد المختار</button><button class="btn2" id="egDiscard">تجاهل</button></div>`;
+    } else if (ai && ai.empty) h += `<p class="small">البحث (${esc(ai.date || '')}) ملقاش البرفان ده في محلات مصرية.</p>`;
+    h += `<div class="ai-find"><button class="btn" id="egFind">🔎 ${ok || ai ? 'دوّر تاني' : 'دوّر في مصر'} بالذكاء الاصطناعي</button><p class="small" id="egMsg"></p></div>`;
+    box.innerHTML = h;
+    const by = id => box.querySelector('#' + id);
+    if (by('egFind')) by('egFind').onclick = () => findInEgypt(g);
+    if (by('egConfirm')) by('egConfirm').onclick = () => {
+      const pick = [...box.querySelectorAll('[data-pick]')].filter(c => c.checked).map(c => ai.stores[+c.dataset.pick]);
+      if (!pick.length) { by('egMsg').textContent = 'علّم على محل واحد على الأقل'; return; }
+      saveEG(g, { stores: pick, date: new Date().toISOString().slice(0, 10), sources: (ai.sources || []).slice(0, 6) });
+      delete lastAI[ekey(g)]; store.set('ayman-egypt-ai', JSON.stringify(lastAI)); renderEgSect(g); renderList();
+    };
+    if (by('egDiscard')) by('egDiscard').onclick = () => { delete lastAI[ekey(g)]; store.set('ayman-egypt-ai', JSON.stringify(lastAI)); renderEgSect(g); };
+    if (by('egRemove')) by('egRemove').onclick = () => { saveEG(g, null); renderEgSect(g); renderList(); };
+  }
+  const BUILT_IN_KEY = 'AQ.Ab8RN6JZnAkEybaqaVzmWkBgaufmUyBCNLfrw6GcdUtXIZa7jg';   // fixed key: «دوّر في مصر» works with nothing to enter
+  async function findInEgypt(g) {
+    const key = store.get('ayman-gemini-key') || BUILT_IN_KEY;
+    const msg = $('egMsg'), btn = $('egFind');
+    if (!key) { msg.textContent = 'حط مفتاح Gemini الأول من ⚙ الإعدادات.'; return; }
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span>بيدوّر في المحلات المصرية…'; msg.textContent = '';
+    const name = (g.brand + ' ' + g.name).trim();
+    const prompt = `ابحث على الإنترنت عن أماكن شراء البرفان الأصلي "${name}" في مصر النهارده (مواقع أو محلات بتبيع وتوصّل في مصر، زي Faces وفتحي إبراهيم وأمازون مصر ونون مصر وجوميا وغيرهم). ` +
+      `الأصلي بس، مش "مستوحى" ولا تقليد ولا تستر. لو الحجم مختلف اكتبه. ` +
+      `رد بـ JSON بس من غير أي كلام تاني، بالشكل ده: {"stores":[{"store":"اسم المحل","price":سعر بالجنيه رقم أو null,"size":"100ml","url":"لينك صفحة المنتج","in_stock":true}]} ` +
+      `حد أقصى ٦ محلات. لو مش متأكد من محل متكتبوش. لو ملقيتش، رجّع {"stores":[]}.`;
+    const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } };
+    let out = null, err = 'الذكاء الاصطناعي مش متاح دلوقتي، جرّب كمان شوية.';
+    for (const m of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest']) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) { const t = await res.text(); if (res.status === 400 && /API key/i.test(t)) { err = 'المفتاح مش صح. اتأكد منه في ⚙.'; break; } if (res.status === 429 && !/limit: 0/.test(t)) { err = 'اتعدّى عدد البحث المسموح، استنى دقيقة.'; break; } continue; }
+        const d = await res.json(), c = d.candidates && d.candidates[0];
+        const text = (c && c.content && c.content.parts || []).map(p => p.text || '').join('');
+        const a = text.indexOf('{'), b = text.lastIndexOf('}');
+        let parsed = { stores: [] }; try { parsed = JSON.parse(text.slice(a, b + 1)); } catch (e) {}
+        const chunks = (c && c.groundingMetadata && c.groundingMetadata.groundingChunks) || [];
+        out = { stores: (parsed.stores || []).filter(x => x && x.store).slice(0, 6).map(x => ({ store: String(x.store).slice(0, 60), price: +x.price || null, size: x.size ? String(x.size).slice(0, 20) : '', url: /^https?:\/\//.test(x.url || '') ? x.url : '', in_stock: x.in_stock })),
+          sources: chunks.map(k => k.web).filter(Boolean).map(w => ({ uri: w.uri, title: w.title })), date: new Date().toISOString().slice(0, 10) };
+        if (!out.stores.length) out.empty = true;
+        break;
+      } catch (e) { err = 'مفيش إنترنت أو الاتصال اتقطع.'; }
+    }
+    if (out) { lastAI[ekey(g)] = out; store.set('ayman-egypt-ai', JSON.stringify(lastAI)); renderEgSect(g); }
+    else { btn.disabled = false; btn.textContent = '🔎 دوّر في مصر بالذكاء الاصطناعي'; msg.textContent = err; }
+  }
+
+  // ---------- settings: key + export / import of confirmed availability
+  function egCount() { return Object.values(EG).filter(e => e && e.stores && e.stores.length).length; }
+  $('settings').onclick = () => { $('key').value = store.get('ayman-gemini-key') || ''; $('keyMsg').textContent = ''; $('egStats').textContent = `${ar(egCount())} برفان متأكد إنهم متوفرين في مصر.`; $('set').showModal(); };
+  $('setClose').onclick = () => $('set').close();
+  $('set').addEventListener('click', e => { if (e.target === $('set')) $('set').close(); });
+  $('keySave').onclick = () => { const k = $('key').value.trim(); store.set('ayman-gemini-key', k || null); $('keyMsg').textContent = k ? 'اتحفظ ✓' : 'المفتاح فاضي'; };
+  $('keyDel').onclick = () => { store.set('ayman-gemini-key', null); $('key').value = ''; $('keyMsg').textContent = 'اتمسح'; };
+  $('egExport').onclick = () => {
+    const data = {}; Object.keys(EG).forEach(k => { if (EG[k] && EG[k].stores && EG[k].stores.length) data[k] = EG[k]; });
+    const js = '/* Ayman: perfumes confirmed available in Egypt (exported ' + new Date().toISOString().slice(0, 10) + '). Keep next to Ayman.html. */\nwindow.AYMAN_EGYPT=' + JSON.stringify(data) + ';\n';
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([js], { type: 'text/javascript' })); a.download = 'egypt.js'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  $('egImport').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const t = await f.text(); let data = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); } catch (x) {}
+    if (!data) { $('egStats').textContent = 'الملف مش مفهوم'; return; }
+    let local = {}; try { local = JSON.parse(store.get('ayman-egypt') || '{}'); } catch (x) {}
+    Object.assign(local, data); store.set('ayman-egypt', JSON.stringify(local)); loadEG(); renderList();
+    $('egStats').textContent = `اتضاف ✓ · ${ar(egCount())} برفان متوفرين في مصر.`;
+  };
+
   function showMore() { if (!MORE) return; const y = $('list').scrollTop; SHOWN += PAGE; renderList(); $('list').scrollTop = y; }
   $('list').addEventListener('click', e => {
     if (e.target.id === 'more') return showMore();
@@ -392,8 +556,9 @@
   $('info').addEventListener('click', e => { if (e.target === $('info')) $('info').close(); });
   $('list').addEventListener('scroll', () => { const l = $('list'); if (MORE && l.scrollTop + l.clientHeight > l.scrollHeight - 300) showMore(); }, { passive: true });
   let qT; $('q').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { query = e.target.value; SHOWN = PAGE; $('list').scrollTop = 0; renderList(); }, 120); });
+  $('egOnly').onclick = () => { EG_ONLY = !EG_ONLY; $('egOnly').classList.toggle('on', EG_ONLY); SHOWN = PAGE; renderList(); };
   $('filters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; gender = b.dataset.f;
-    $('filters').querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); SHOWN = PAGE; renderList(); });
+    $('filters').querySelectorAll('.chip[data-f]').forEach(c => c.classList.toggle('on', c === b)); SHOWN = PAGE; renderList(); });
 
   // ---------- automatic suggestions (no AI: fixed rules over the table, instant)
   const OPTS = { gender: ['حريمي', 'رجالي', 'للجنسين'], occasion: ['شغل أو جامعة', 'خروجة', 'سهرة', 'ميعاد', 'رياضة', 'مناسبة رسمية'], style: ['منعشة', 'نضيفة وخفيفة', 'حلوة', 'دافية وتقيلة'], season: ['صيف', 'شتاء'] };
@@ -460,6 +625,8 @@
   $('resetReco').onclick = () => { Object.keys(answers).forEach(k => { answers[k] = ''; }); TYPES.clear(); $('free').value = ''; $('recoMsg').textContent = '';
     document.querySelectorAll('#sec-reco .chip').forEach(c => c.classList.remove('on')); renderTypes(); renderCounts(); };
   renderCounts();
+
+  loadEG();
 
   // ---------- start
   $('sub').textContent = GUIDE.length ? ar(GUIDE.length) + ' برفان · ابحث، قارن، واختار' : 'حط ملف perfumes.js جنب الصفحة';
