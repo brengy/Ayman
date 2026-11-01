@@ -59,9 +59,17 @@
   .head h2 { font-family: "Readex Pro", sans-serif; font-weight: 700; font-size: 21px; margin: 0; }
   .head .src { color: var(--faint); font-size: 13.5px; }
   .search { position: relative; }
-  .search svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+  .search > svg { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--faint); }
   .field { width: 100%; background: var(--field); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; outline: none; }
   .search .field { padding-inline-start: 44px; }
+  .search.has-voice .field { padding-inline-end: 96px; }
+  .voice { position: absolute; inset-inline-end: 8px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; align-items: center; }
+  .voice[hidden] { display: none; }
+  .vmic, .vlang { border: 1px solid var(--line-2); background: var(--field); color: var(--a2); border-radius: 999px; height: 36px; display: grid; place-items: center; }
+  .vmic { width: 36px; } .vlang { padding: 0 10px; font-size: 12.5px; font-weight: 700; }
+  .vmic.on { background: var(--accent); color: var(--on-accent); border-color: transparent; animation: vpulse 1.2s ease-in-out infinite; }
+  @keyframes vpulse { 50% { box-shadow: 0 0 0 8px var(--accent-soft); } }
+  .vhint { font-size: 12.5px; color: var(--faint); margin: 6px 4px 0; min-height: 1em; }
   .field:focus { border-color: var(--a2); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
   .chip { border: 1px solid var(--line); background: var(--field); border-radius: 999px; padding: 8px 16px; font-size: 14.5px; }
@@ -239,7 +247,12 @@
     <div class="search">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input class="field" id="q" type="search" placeholder="دوّر بالاسم أو الماركة أو الريحة أو المكون" aria-label="بحث" autocomplete="off">
+      <span class="voice" id="voice" hidden>
+        <button class="vlang" id="vLang" aria-label="لغة البحث بالصوت" title="لغة البحث بالصوت">EN</button>
+        <button class="vmic" id="vMic" aria-label="ابحث بالصوت" title="ابحث بالصوت"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+      </span>
     </div>
+    <p class="vhint" id="vHint" aria-live="polite"></p>
     <div class="chips" id="filters">
       <button class="chip on" data-f="">الكل</button><button class="chip" data-f="حريمي">حريمي</button><button class="chip" data-f="رجالي">رجالي</button><button class="chip" data-f="للجنسين">للجنسين</button><button class="chip" id="egOnly">🇪🇬 متوفر في مصر</button><button class="chip" id="priced">💰 ليه سعر</button>
     </div>
@@ -420,6 +433,32 @@
   const _theme = $('theme').onclick;
   $('theme').onclick = () => { store.set('ayman-colors', 'builtin'); clearColors(); _theme(); };
 
+  // ---------- Arabic spellings of brands and names → how they are written in the database
+  const AR_NAMES = [
+    ['ايف سان لوران', 'yves saint laurent'], ['سان لوران', 'yves saint laurent'], ['جورجيو ارماني', 'armani'], ['ارماني', 'armani'], ['دولتشي اند جابانا', 'dolce gabbana'], ['دولشي اند جابانا', 'dolce gabbana'], ['دولتشي', 'dolce'],
+    ['كارولينا هيريرا', 'carolina herrera'], ['كارولينا', 'carolina herrera'], ['جان بول جوتييه', 'jean paul gaultier'], ['جان بول', 'jean paul gaultier'], ['باكو رابان', 'rabanne'], ['رابان', 'rabanne'],
+    ['هوجو بوس', 'hugo boss'], ['هيوجو بوس', 'hugo boss'], ['كالفن كلاين', 'calvin klein'], ['توم فورد', 'tom ford'], ['فيكتوريا سيكريت', "victoria's secret"], ['مارك جاكوبس', 'marc jacobs'],
+    ['مونت بلانك', 'montblanc'], ['مون بلان', 'montblanc'], ['الحرمين', 'al haramain'], ['ميزون الحمرا', 'maison alhambra'], ['ناركيسو رودريجيز', 'narciso rodriguez'], ['نارسيسو', 'narciso'],
+    ['ديور', 'dior'], ['شانيل', 'chanel'], ['لانكوم', 'lancome'], ['فرساتشي', 'versace'], ['فيرساتشي', 'versace'], ['جوتشي', 'gucci'], ['غوتشي', 'gucci'], ['برادا', 'prada'], ['فالنتينو', 'valentino'],
+    ['جيفنشي', 'givenchy'], ['كريد', 'creed'], ['بربري', 'burberry'], ['بيربري', 'burberry'], ['لاكوست', 'lacoste'], ['دافيدوف', 'davidoff'], ['ازارو', 'azzaro'], ['بلغاري', 'bvlgari'], ['بولغاري', 'bvlgari'],
+    ['كنزو', 'kenzo'], ['لطافة', 'lattafa'], ['لطافه', 'lattafa'], ['رصاصي', 'rasasi'], ['اجمل', 'ajmal'], ['ارماف', 'armaf'], ['افنان', 'afnan'], ['زارا', 'zara'], ['بينيتون', 'benetton'], ['بنتون', 'benetton'],
+    ['موجلر', 'mugler'], ['تيري موجلر', 'mugler'], ['كلوي', 'chloe'], ['هيرميس', 'hermes'], ['ارميس', 'hermes'], ['كيليان', 'kilian'], ['اماواج', 'amouage'], ['امواج', 'amouage'], ['زيرجوف', 'xerjoff'],
+    ['بارفيوم دي مارلي', 'parfums de marly'], ['دي مارلي', 'de marly'], ['مانسيرا', 'mancera'], ['مونتال', 'montale'], ['جو مالون', 'jo malone'], ['بايريدو', 'byredo'], ['لو لابو', 'le labo'],
+    ['بلو دي شانيل', 'bleu de chanel'], ['بلو دو شانيل', 'bleu de chanel'], ['سوفاج', 'sauvage'], ['ليبر', 'libre'], ['بلاك اوبيوم', 'black opium'], ['لا في است بيل', 'la vie est belle'], ['لافي ايبيل', 'la vie est belle'],
+    ['جادور', "j'adore"], ['ميس ديور', 'miss dior'], ['كوكو مدموازيل', 'coco mademoiselle'], ['كوكو', 'coco'], ['شانس', 'chance'], ['جود جيرل', 'good girl'], ['باد بوي', 'bad boy'],
+    ['اكوا دي جيو', 'acqua di gio'], ['اكوا دي جو', 'acqua di gio'], ['سترونجر ويز يو', 'stronger with you'], ['ون مليون', '1 million'], ['وان مليون', '1 million'], ['انفكتوس', 'invictus'], ['ايروس', 'eros'],
+    ['لو ميل', 'le male'], ['ذا ون', 'the one'], ['لايت بلو', 'light blue'], ['ليجند', 'legend'], ['اكسبلورر', 'explorer'], ['باكارات روج', 'baccarat rouge'], ['باكارا روج', 'baccarat rouge'], ['باكارات', 'baccarat'],
+    ['افينتوس', 'aventus'], ['ايفنتوس', 'aventus'], ['كولد', 'cold'], ['هوت', 'hot'], ['سيلفر', 'silver'], ['بلاك', 'black'], ['انتنس', 'intense'], ['انتينس', 'intense'], ['اليكسير', 'elixir'], ['الكسير', 'elixir'],
+    ['او دي بارفان', 'eau de parfum'], ['او دو بارفان', 'eau de parfum'], ['او دي تواليت', 'eau de toilette'], ['او دو تواليت', 'eau de toilette'], ['بارفان', 'parfum'], ['بارفيوم', 'parfum'], ['تواليت', 'toilette'],
+    ['خمرة', 'khamrah'], ['اسد', 'asad'], ['يارا', 'yara'], ['هاواس', 'hawas'], ['كلوب دي نوي', 'club de nuit'], ['كلوب دو نوي', 'club de nuit'],
+  ].map(([a, e]) => [norm(a), e]).sort((x, y) => y[0].length - x[0].length);
+  const FILLER = new Set(['عطر', 'برفان', 'برفيوم', 'ريحه', 'عايز', 'عاوز', 'اريد', 'ابحث', 'دور', 'على', 'عن', 'من', 'في']);
+  function arToDb(text) {                    // «ديور سوفاج» → «dior sauvage»; Arabic notes like «عود» stay as they are
+    let t = ' ' + norm(text) + ' ';
+    for (const [a, e] of AR_NAMES) t = t.split(' ' + a + ' ').join(' ' + e + ' ');
+    return t.split(/\s+/).filter(w => w && !FILLER.has(w)).join(' ');
+  }
+
   // ---------- sections
   function show(sec) {
     document.querySelectorAll('[data-sec]').forEach(el => { el.hidden = el.dataset.sec !== sec; });
@@ -442,7 +481,7 @@
   // ---------- list
   function renderList() {
     const q = norm(query);
-    const qw = q.split(/\s+/).filter(Boolean);                       // every word must match, in any order («benetton cold»)
+    const qw = arToDb(q).split(/\s+/).filter(Boolean);                       // every word must match, in any order («benetton cold»)
     let items = (RES ? RESLIST.map(byGid) : GUIDE).filter(g => inScope(g) && (!gender || g.gender === gender) && (!EG_ONLY || (g.pr && isAvail(g.pr))) && (!PRICED || (g.pr && g.pr.price)) && (!qw.length || qw.every(w => g._s.includes(w))));
     const total = items.length;
     $('count').textContent = total ? ar(total) + ' برفان' + (total > SHOWN ? ` · معروض ${ar(SHOWN)}` : '') : '';
@@ -576,6 +615,30 @@
     const inInfo = !!e.target.closest('#infoBody');
     openViewer(inInfo ? INFO_G : byGid(cur));
   });
+
+  // ---------- voice search (Chrome, Edge, Safari)
+  (function () {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;                                     // e.g. Firefox: no mic button
+    $('voice').hidden = false; document.querySelector('#sec-list .search').classList.add('has-voice');
+    let lang = store.get('ayman-voice') || 'en';
+    const showLang = () => { $('vLang').textContent = lang === 'en' ? 'EN' : 'ع'; };
+    showLang();
+    $('vLang').onclick = () => { lang = lang === 'en' ? 'ar' : 'en'; store.set('ayman-voice', lang); showLang();
+      $('vHint').textContent = lang === 'en' ? 'الصوت بالإنجليزي: أحسن لأسامي البرفانات' : 'الصوت بالعربي: للريحة والمكونات، وأشهر الماركات بالنطق العربي'; };
+    let rec = null, on = false;
+    const setText = t => { $('q').value = t; $('q').dispatchEvent(new Event('input')); };
+    $('vMic').onclick = () => {
+      if (on && rec) { rec.stop(); return; }
+      rec = new SR(); rec.lang = lang === 'en' ? 'en-US' : 'ar-EG'; rec.interimResults = true; rec.maxAlternatives = 1;
+      rec.onstart = () => { on = true; $('vMic').classList.add('on'); $('vHint').textContent = '🎤 اتكلم دلوقتي…'; };
+      rec.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; setText(t.trim());
+        if (e.results[e.results.length - 1].isFinal) $('vHint').textContent = '«' + t.trim() + '»' + (lang === 'ar' && arToDb(t) !== norm(t).trim() ? ' ← ' + arToDb(t) : ''); };
+      rec.onerror = e => { $('vHint').textContent = e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'اسمح للموقع يستخدم المايك من إعدادات المتصفح' : e.error === 'no-speech' ? 'مسمعتش حاجة، جرّب تاني' : 'الصوت مش شغال دلوقتي (' + e.error + ')'; };
+      rec.onend = () => { on = false; $('vMic').classList.remove('on'); if ($('vHint').textContent === '🎤 اتكلم دلوقتي…') $('vHint').textContent = ''; };
+      try { rec.start(); } catch (e) { $('vHint').textContent = 'الصوت مش شغال دلوقتي'; }
+    };
+  })();
 
   function showMore() { if (!MORE) return; const y = $('list').scrollTop; SHOWN += PAGE; renderList(); $('list').scrollTop = y; }
   $('list').addEventListener('click', e => {
